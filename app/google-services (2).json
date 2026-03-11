@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "238947208730",
+    "project_id": "outcreate-baf6f",
+    "storage_bucket": "outcreate-baf6f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238947208730:android:5cf62d5cabc2f0e6fecba3",
+        "android_client_info": {
+          "package_name": "com.example.bookingapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-xYBlztnxM4DTIcCW8KrijAfy9XB3R6o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238947208730:android:b933139596f1354cfecba3",
+        "android_client_info": {
+          "package_name": "com.example.myapplication"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-xYBlztnxM4DTIcCW8KrijAfy9XB3R6o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
