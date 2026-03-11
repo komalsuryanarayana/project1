@@ -38,7 +38,7 @@ data class SportItem(
 @Composable
 fun SportsListScreen(navController: NavHostController) {
     val sports = listOf(
-        SportItem("Foosball", R.drawable.pool, "A fast-paced tabletop football game where players control rods to score goals.", 12),
+        SportItem("Foosball", R.drawable.foosball, "A fast-paced tabletop football game where players control rods to score goals.", 12),
         SportItem("Table Tennis", R.drawable.tabletenis, "A quick indoor paddle sport where players rally a lightweight ball across a net.", 8),
         SportItem("Carrom", R.drawable.carrom, "A precision board game where players flick a striker to pocket wooden discs.", 4),
         SportItem("8 Ball Pool", R.drawable.pool, "A cue-sport played on a felt table where players aim to pocket balls using strategy and control.", 6),
