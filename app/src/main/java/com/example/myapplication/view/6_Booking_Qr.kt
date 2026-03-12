@@ -36,7 +36,7 @@ import com.google.firebase.auth.FirebaseAuth
 fun BookingPassScreen(navController: NavHostController, sportName: String, bookingId: String? = null) {
     val vm: OutScheduleViewModel = viewModel()
     val repo = remember { SlotRepository() }
-    
+
     // Use a state to hold the booking details
 
 
@@ -54,7 +54,7 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
             }
         }
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -140,7 +140,7 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                    
+
                     Button(
                         onClick = {
                             var currentuser = vm.getCurrentUserEmail()
@@ -150,8 +150,8 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                     ) {
-                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(35.dp))
+                        Spacer(modifier = Modifier.width(2.dp))
                         Text("Cancel")
                     }
 

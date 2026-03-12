@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.foundation.layout)
     testImplementation(libs.junit)
+    implementation("com.google.zxing:core:3.5.3")
     implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
     implementation ("com.google.firebase:firebase-auth")
     implementation("com.google.android.gms:play-services-auth:21.2.0")

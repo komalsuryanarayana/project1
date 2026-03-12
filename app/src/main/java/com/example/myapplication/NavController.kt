@@ -24,7 +24,7 @@ fun AppNavigation(navController: NavHostController) {
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") { LoginScreen(navController) }
         composable ("adminlogin"){AdminLoginPage(navController)  }
-        composable ("adminpage"){adminpage(navController)  }
+        composable ("AdminDashboardScreen"){AdminDashboardScreen(navController)  }
         composable("signup") { Signuppage(navController) }
         composable("category/{username}") { k->
             val username = k.arguments?.getString("username")?:""
@@ -46,6 +46,9 @@ fun AppNavigation(navController: NavHostController) {
         composable("booking_pass/{sportName}") { backStackEntry ->
             val sportName = backStackEntry.arguments?.getString("sportName") ?: "Sport"
             BookingPassScreen(navController, sportName)
+        }
+        composable("adminpage") {
+            AdminDashboardScreen(navController)
         }
     }
 }

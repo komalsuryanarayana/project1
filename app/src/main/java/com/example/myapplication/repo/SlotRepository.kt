@@ -8,6 +8,7 @@ import com.example.myapplication.Model.Booking
 import com.example.myapplication.Model.Slot
 import com.google.firebase.database.*
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
@@ -247,4 +248,48 @@ class SlotRepository {
             }.timeInMillis
         } catch (e: Exception) { 0L }
     }
+
+
+
+    fun streamAllBookings(): Flow<List<Booking>> = callbackFlow {
+        val db = FirebaseDatabase.getInstance().getReference("bookings")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val bookings = snapshot.children.mapNotNull { it.getValue(Booking::class.java) }
+                trySend(bookings)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        db.addValueEventListener(listener)
+        awaitClose { db.removeEventListener(listener) }
+    }
+
+    suspend fun cancelBooking(bookingId: String, sportName: String, timeLabel: String): Boolean {
+        return try {
+            // 1. Remove from bookings node
+            val bookingsQuery = getBookingsRef().orderByChild("id").equalTo(bookingId)
+            val bookingsSnap = bookingsQuery.get().await()
+            bookingsSnap.children.forEach { it.ref.removeValue().await() }
+
+            // 2. Free up the slot
+            val slotsRef = getSlotsRef(sportName)
+            val slotsSnap = slotsRef.get().await()
+            slotsSnap.children.forEach { slot ->
+                if (slot.child("label").value == timeLabel) {
+                    slot.ref.child("bookedBy").removeValue().await()
+                    slot.ref.child("startTime").removeValue().await()
+                }
+            }
+            true
+        } catch (e: Exception) {
+            Log.e("SlotRepo", "Cancel failed: ${e.message}")
+            false
+        }
+    }
 }
+
+
+// Add this to your SlotRepository class
+

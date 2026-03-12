@@ -29,10 +29,12 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
+                // Disable bottom bar for login, signup, splash and ALL admin screens
                 val showBottomBar = currentRoute != null && 
-                                   !currentRoute.contains("login") && 
-                                   !currentRoute.contains("signup") && 
-                                   !currentRoute.contains("splash")
+                                   !currentRoute.lowercase().contains("login") && 
+                                   !currentRoute.lowercase().contains("signup") && 
+                                   !currentRoute.lowercase().contains("splash") &&
+                                   !currentRoute.lowercase().contains("admin")
 
                 Scaffold(
                     bottomBar = {
@@ -65,16 +67,10 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
             onClick = {
                 val email = auth.currentUser?.email ?: "User"
                 navController.navigate("category/$email") {
-                    // Pop up to the start destination of the graph to
-                    // avoid building up a large stack of destinations
-                    // on the back stack as users select items
                     popUpTo(navController.graph.startDestinationId) {
                         saveState = true
                     }
-                    // Avoid multiple copies of the same destination when
-                    // reselecting the same item
                     launchSingleTop = true
-                    // Restore state when reselecting a previously selected item
                     restoreState = true
                 }
             },
@@ -91,7 +87,6 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
             label = { Text("History") },
             selected = currentRoute == "booking_history",
             onClick = {
-
                 navController.navigate("booking_history") {
                     popUpTo(navController.graph.startDestinationId) {
                         saveState = true
