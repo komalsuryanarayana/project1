@@ -29,6 +29,7 @@ import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.repo.SlotRepository
 import com.example.myapplication.ui.theme.KhelomoreGray
 import com.example.myapplication.ui.theme.KhelomoreOrange
+import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,42 +136,16 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                         ) {
                             Icon(Icons.Default.QrCode, contentDescription = "QR Code", modifier = Modifier.size(100.dp), tint = Color.DarkGray)
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "Scan this QR at the venue entrance",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
-                
-                // Action Buttons
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    OutlinedButton(
-                        onClick = { 
-                            navController.navigate("slot_booking/${booking?.sportName ?: sportName}")
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = KhelomoreOrange)
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Edit Slot")
-                    }
+
                     
                     Button(
-                        onClick = { 
-                            booking?.let { vm.cancelBooking(it.id) }
-                            navController.navigate("category") { popUpTo("category") { inclusive = true } }
+                        onClick = {
+                            var currentuser = vm.getCurrentUserEmail()
+                            navController.navigate("category/${currentuser}") { popUpTo("category/${currentuser}") { inclusive = true } }
                         },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
@@ -180,18 +155,7 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Cancel")
                     }
-                }
 
-                Spacer(modifier = Modifier.weight(1f))
-
-                Button(
-                    onClick = { navController.navigate("category") { popUpTo("category") { inclusive = true } } },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange)
-                ) {
-                    Text("DONE", fontWeight = FontWeight.Bold)
-                }
             }
         }
     }

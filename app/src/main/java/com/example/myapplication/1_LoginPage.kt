@@ -54,23 +54,15 @@ fun LoginScreen(navController: NavHostController) {
     val auth = Firebase.auth
     val context = LocalContext.current
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA)),
-        contentAlignment = Alignment.Center
-    ){
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF8F9FA)), contentAlignment = Alignment.Center){
         Card (
-        modifier = Modifier
-            .fillMaxWidth(0.9f)
-            .wrapContentHeight(),
+        modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp, vertical = 40.dp),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(

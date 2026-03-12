@@ -31,26 +31,9 @@ fun Signuppage(navController: NavController) {
     val auth = Firebase.auth
     val context = LocalContext.current
 
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA)),
-        contentAlignment = Alignment.Center
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp, vertical = 40.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF8F9FA)), contentAlignment = Alignment.Center) {
+        Card(modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Sign up",
                     fontSize = 32.sp,
@@ -158,9 +141,7 @@ fun Signuppage(navController: NavController) {
                             }
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange)
                 ) {
@@ -175,9 +156,7 @@ fun Signuppage(navController: NavController) {
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 // Log In Link
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = "Already have an account? ",
                         color = Color.Gray,

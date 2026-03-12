@@ -26,3 +26,9 @@ data class Slot(
     val isBooked get() = !bookedBy.isNullOrBlank()
 }
 
+
+
+enum class SlotSortOrder {
+    MANY_TO_FEW,
+    FEW_TO_MANY
+}

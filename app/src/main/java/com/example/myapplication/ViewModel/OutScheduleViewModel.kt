@@ -5,9 +5,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.myapplication.Model.Booking
+import com.example.myapplication.Model.SlotSortOrder
+import com.example.myapplication.repo.SlotRepository
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 
@@ -55,4 +58,14 @@ class OutScheduleViewModel : ViewModel(){
     fun cancelBooking(bookingId: String) {
         bookings.removeIf { it.id == bookingId }
     }
+
+
+    var searchQuery = mutableStateOf("")
+
+
+
+    var sortOrder = mutableStateOf(SlotSortOrder.MANY_TO_FEW)
+
+    val repo =  SlotRepository()
+
 }

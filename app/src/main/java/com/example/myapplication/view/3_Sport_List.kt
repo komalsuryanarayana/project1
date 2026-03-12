@@ -27,29 +27,31 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.myapplication.Model.SlotSortOrder
 import com.example.myapplication.R
 import com.example.myapplication.Model.SportItem
+import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.repo.SlotRepository
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
 
 // Enum to manage sorting logic
-enum class SlotSortOrder {
-    MANY_TO_FEW,
-    FEW_TO_MANY
-}
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SportsListScreen(navController: NavHostController) {
-    // ---- UI State ----
-    var searchQuery by rememberSaveable { mutableStateOf("") }
-    var sortOrder by rememberSaveable { mutableStateOf(SlotSortOrder.MANY_TO_FEW) }
+    var vm : OutScheduleViewModel = viewModel()
+
     val focusManager = LocalFocusManager.current
 
-    val repo = remember { SlotRepository() }
-    val availableCounts by repo.streamAllAvailableCounts().collectAsState(initial = emptyMap())
+
+
+    val availableCounts by vm.repo.streamAllAvailableCounts().collectAsState(initial = emptyMap())
 
     val sports = remember(availableCounts) {
         listOf(
@@ -62,11 +64,11 @@ fun SportsListScreen(navController: NavHostController) {
     }
 
     // ---- Filtering and Sorting Logic ----
-    val displayList = remember(searchQuery, sortOrder, sports) {
+    val displayList = remember(vm.searchQuery.value, vm.sortOrder.value, sports) {
         sports
-            .filter { it.name.contains(searchQuery, ignoreCase = true) }
+            .filter { it.name.contains(vm.searchQuery.value, ignoreCase = true) }
             .let { filtered ->
-                if (sortOrder == SlotSortOrder.MANY_TO_FEW) {
+                if (vm.sortOrder.value == SlotSortOrder.MANY_TO_FEW) {
                     filtered.sortedByDescending { it.availableSlots }
                 } else {
                     filtered.sortedBy { it.availableSlots }
@@ -95,16 +97,16 @@ fun SportsListScreen(navController: NavHostController) {
         ) {
             // ---- 1. Search Bar ----
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = vm.searchQuery.value,
+                onValueChange = { vm.searchQuery.value = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Search for a sport...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
+                    if (vm.searchQuery.value.isNotEmpty()) {
+                        IconButton(onClick = { vm.searchQuery.value = "" }) {
                             Icon(Icons.Default.Close, contentDescription = "Clear")
                         }
                     }
@@ -131,19 +133,19 @@ fun SportsListScreen(navController: NavHostController) {
                 Text("Sort by slots:", fontSize = 14.sp, fontWeight = FontWeight.Bold)
 
                 FilterChip(
-                    selected = sortOrder == SlotSortOrder.MANY_TO_FEW,
-                    onClick = { sortOrder = SlotSortOrder.MANY_TO_FEW },
+                    selected = vm.sortOrder.value == SlotSortOrder.MANY_TO_FEW,
+                    onClick = { vm.sortOrder.value = SlotSortOrder.MANY_TO_FEW },
                     label = { Text("Many → Few") },
-                    leadingIcon = if (sortOrder == SlotSortOrder.MANY_TO_FEW) {
+                    leadingIcon = if (vm.sortOrder.value == SlotSortOrder.MANY_TO_FEW) {
                         { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                     } else null
                 )
 
                 FilterChip(
-                    selected = sortOrder == SlotSortOrder.FEW_TO_MANY,
-                    onClick = { sortOrder = SlotSortOrder.FEW_TO_MANY },
+                    selected = vm.sortOrder.value == SlotSortOrder.FEW_TO_MANY,
+                    onClick = { vm.sortOrder.value = SlotSortOrder.FEW_TO_MANY },
                     label = { Text("Few → Many") },
-                    leadingIcon = if (sortOrder == SlotSortOrder.FEW_TO_MANY) {
+                    leadingIcon = if (vm.sortOrder.value == SlotSortOrder.FEW_TO_MANY) {
                         { Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp)) }
                     } else null
                 )
@@ -152,7 +154,7 @@ fun SportsListScreen(navController: NavHostController) {
             // ---- 3. List of Sports ----
             if (displayList.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No sports found matching '$searchQuery'", color = Color.Gray)
+                    Text("No sports found matching '${vm.searchQuery.value}'", color = Color.Gray)
                 }
             } else {
                 LazyColumn(
