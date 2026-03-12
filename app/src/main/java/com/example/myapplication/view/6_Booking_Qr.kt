@@ -42,7 +42,7 @@ fun BookingPassScreen(navController: NavHostController, sportName: String) {
             TopAppBar(
                 title = { Text("Booking Confirmation") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate("category") { popUpTo("category") { inclusive = true } } }) {
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }

@@ -4,6 +4,7 @@ package com.example.myapplication.repo
 
 import android.util.Log
 import com.example.myapplication.Firebase.FirebaseProvider
+import com.example.myapplication.Model.Booking
 import com.example.myapplication.Model.Slot
 import com.google.firebase.database.*
 import kotlinx.coroutines.channels.awaitClose
@@ -18,6 +19,7 @@ class SlotRepository {
     private val rootRef = FirebaseProvider.db.reference
 
     private fun getSlotsRef(sportName: String) = rootRef.child("slots").child(sportName.lowercase().replace(" ", "_"))
+    private fun getBookingsRef() = rootRef.child("bookings")
 
     fun streamSlots(sportName: String) = callbackFlow {
         val slotsRef = getSlotsRef(sportName)
@@ -64,6 +66,30 @@ class SlotRepository {
         awaitClose { slotsRef.removeEventListener(listener) }
     }
 
+    fun streamUserBookings(email: String) = callbackFlow<List<Booking>> {
+        val query = getBookingsRef().orderByChild("userId").equalTo(email)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val list = snapshot.children.mapNotNull { snap ->
+                    Booking(
+                        id = snap.child("id").getValue(String::class.java) ?: "",
+                        userId = snap.child("userId").getValue(String::class.java) ?: "",
+                        sportName = snap.child("sportName").getValue(String::class.java) ?: "",
+                        date = snap.child("date").getValue(String::class.java) ?: "",
+                        time = snap.child("time").getValue(String::class.java) ?: "",
+                        status = snap.child("status").getValue(String::class.java) ?: "Confirmed"
+                    )
+                }
+                trySend(list)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        query.addValueEventListener(listener)
+        awaitClose { query.removeEventListener(listener) }
+    }
+
     suspend fun seedSlotsIfEmpty(sportName: String, labels: List<String>) {
         try {
             val slotsRef = getSlotsRef(sportName)
@@ -92,10 +118,16 @@ class SlotRepository {
         }
 
         val uid = user.uid
+        val email = user.email ?: "Guest"
         val ref = getSlotsRef(sportName).child(slotId)
 
         // Calculate the actual timestamp for the backend to use
         val startTime = calculateTimestamp(slotLabel, dayOffset)
+        
+        // Date and Time strings for the booking record
+        val calendar = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, dayOffset) }
+        val dateStr = "${calendar.get(Calendar.DAY_OF_MONTH)} ${getMonthName(calendar.get(Calendar.MONTH))}"
+        val timeStr = slotLabel
 
         ref.runTransaction(object : Transaction.Handler {
             override fun doTransaction(data: MutableData): Transaction.Result {
@@ -108,9 +140,28 @@ class SlotRepository {
             }
 
             override fun onComplete(e: DatabaseError?, committed: Boolean, snap: DataSnapshot?) {
-                continuation.resume(e == null && committed)
+                if (e == null && committed) {
+                    // Record the booking in "bookings" node
+                    val bookingId = "KM-" + (10000..99999).random().toString()
+                    val bookingData = mapOf(
+                        "id" to bookingId,
+                        "userId" to email,
+                        "sportName" to sportName,
+                        "date" to dateStr,
+                        "time" to timeStr,
+                        "status" to "Confirmed"
+                    )
+                    getBookingsRef().push().setValue(bookingData)
+                    continuation.resume(true)
+                } else {
+                    continuation.resume(false)
+                }
             }
         })
+    }
+
+    private fun getMonthName(month: Int): String {
+        return listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month]
     }
 
     private fun calculateTimestamp(label: String, dayOffset: Int): Long {

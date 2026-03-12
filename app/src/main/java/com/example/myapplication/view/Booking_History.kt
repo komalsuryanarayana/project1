@@ -1,6 +1,7 @@
 package com.example.myapplication.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,7 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,6 +21,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.Model.Booking
 import com.example.myapplication.ViewModel.OutScheduleViewModel
+import com.example.myapplication.repo.SlotRepository
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
 
@@ -27,10 +29,11 @@ import com.example.myapplication.ui.theme.KhelomoreOrange
 @Composable
 fun BookingHistoryScreen(navController: NavHostController) {
     val vm: OutScheduleViewModel = viewModel()
+    val repo = remember { SlotRepository() }
     val currentUserEmail = vm.getCurrentUserEmail()
     
-    // Filter bookings by current user
-    val userBookings = vm.bookings.filter { it.userId == currentUserEmail }
+    // Stream bookings from Firebase in real-time
+    val userBookings by repo.streamUserBookings(currentUserEmail).collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -57,8 +60,12 @@ fun BookingHistoryScreen(navController: NavHostController) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(userBookings) { booking ->
-                    HistoryCard(booking)
+                // Sort by ID or Date if needed, here we show as they come
+                items(userBookings.reversed()) { booking ->
+                    HistoryCard(booking) {
+                        // Redirect to the receipt/pass screen
+                        navController.navigate("booking_pass/${booking.sportName}")
+                    }
                 }
             }
         }
@@ -66,9 +73,11 @@ fun BookingHistoryScreen(navController: NavHostController) {
 }
 
 @Composable
-fun HistoryCard(booking: Booking) {
+fun HistoryCard(booking: Booking, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

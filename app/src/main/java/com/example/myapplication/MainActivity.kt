@@ -17,6 +17,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.KhelomoreOrange
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,7 +29,10 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
-                val showBottomBar = currentRoute !in listOf("login", "signup", "splash")
+                val showBottomBar = currentRoute != null && 
+                                   !currentRoute.contains("login") && 
+                                   !currentRoute.contains("signup") && 
+                                   !currentRoute.contains("splash")
 
                 Scaffold(
                     bottomBar = {
@@ -48,6 +52,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController, currentRoute: String?) {
+    val auth = FirebaseAuth.getInstance()
+    
     NavigationBar(
         containerColor = Color.White,
         tonalElevation = 8.dp
@@ -55,10 +61,21 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
         NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
             label = { Text("Home") },
-            selected = currentRoute == "category" || currentRoute == "sports_list",
+            selected = currentRoute?.startsWith("category") == true || currentRoute == "sports_list",
             onClick = {
-                navController.navigate("category") {
-                    popUpTo("category") { inclusive = true }
+                val email = auth.currentUser?.email ?: "User"
+                navController.navigate("category/$email") {
+                    // Pop up to the start destination of the graph to
+                    // avoid building up a large stack of destinations
+                    // on the back stack as users select items
+                    popUpTo(navController.graph.startDestinationId) {
+                        saveState = true
+                    }
+                    // Avoid multiple copies of the same destination when
+                    // reselecting the same item
+                    launchSingleTop = true
+                    // Restore state when reselecting a previously selected item
+                    restoreState = true
                 }
             },
             colors = NavigationBarItemDefaults.colors(
@@ -75,7 +92,11 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
             selected = currentRoute == "booking_history",
             onClick = {
                 navController.navigate("booking_history") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        saveState = true
+                    }
                     launchSingleTop = true
+                    restoreState = true
                 }
             },
             colors = NavigationBarItemDefaults.colors(
@@ -92,7 +113,11 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
             selected = currentRoute == "profile",
             onClick = {
                 navController.navigate("profile") {
+                    popUpTo(navController.graph.startDestinationId) {
+                        saveState = true
+                    }
                     launchSingleTop = true
+                    restoreState = true
                 }
             },
             colors = NavigationBarItemDefaults.colors(

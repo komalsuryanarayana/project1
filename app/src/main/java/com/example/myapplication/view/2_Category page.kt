@@ -103,7 +103,7 @@ fun Categorypage(navController: NavController, username: String) {
                     title = "Wellness",
                     icon = Icons.Default.Chair,
                     modifier = Modifier.weight(1f),
-                    onClick = {navController.navigate("slot_booking/{Massage Chair}")}
+                    onClick = { navController.navigate("slot_booking/Massage Chair") }
                 )
             }
             

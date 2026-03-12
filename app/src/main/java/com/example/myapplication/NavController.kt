@@ -12,10 +12,17 @@ import com.example.myapplication.view.SplashScreen
 import com.example.myapplication.view.SportDetailScreen
 import com.example.myapplication.view.SportsListScreen
 import com.example.myapplication.view.UserProfileScreen
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = "login") {
+    val auth = FirebaseAuth.getInstance()
+    val currentUser = auth.currentUser
+    
+    // If user is already logged in, start at category, otherwise login
+    val startDestination = if (currentUser != null) "category/${currentUser.email ?: ""}" else "login"
+
+    NavHost(navController = navController, startDestination = startDestination) {
         composable ("splash"){ SplashScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("signup") { Signuppage(navController) }
