@@ -34,7 +34,6 @@ fun Categorypage(navController: NavController, username: String) {
     } else {
         "User"
     }
-
     Scaffold(
         topBar = {
             LargeTopAppBar(

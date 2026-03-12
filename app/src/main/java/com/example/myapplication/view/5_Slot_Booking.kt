@@ -24,8 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.Model.Slot
+import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.repo.SlotRepository
 import com.example.myapplication.ui.theme.KhelomoreGray
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
@@ -38,13 +40,9 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SlotBookingScreen(navController: NavHostController, sportName: String) {
-    var selectedDate by remember { mutableIntStateOf(0) }
-    var selectedSlotId by remember { mutableStateOf<String?>(null) }
-    var selectedSlotLabel by remember { mutableStateOf("") }
-    var isBooking by remember { mutableStateOf(false) }
+    var vm: OutScheduleViewModel = viewModel()
 
-    val repo = remember { SlotRepository() }
-    var slots by remember { mutableStateOf(listOf<Slot>()) }
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -56,14 +54,14 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
     }
 
     LaunchedEffect(sportName) {
-        repo.seedSlotsIfEmpty(
+        vm.repo.seedSlotsIfEmpty(
             sportName = sportName,
             labels = listOf("06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "09:40 AM", "10:00 AM", "11:00 AM", "11:30 AM", "12:00 PM")
         )
     }
 
     LaunchedEffect(sportName) {
-        repo.streamSlots(sportName).collect { slots = it }
+        vm.repo.streamSlots(sportName).collect { vm.slots.value = it }
     }
 
     Scaffold(
@@ -87,18 +85,18 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                     Column {
                         Text("Selected Slot", fontSize = 12.sp, color = Color.Gray)
                         Text(
-                            if (selectedSlotId != null) selectedSlotLabel else "None",
+                            if (vm.selectedSlotId.value != null) vm.selectedSlotLabel.value else "None",
                             fontWeight = FontWeight.Bold
                         )
                     }
                     Button(
                         onClick = {
-                            selectedSlotId?.let { id ->
+                            vm.selectedSlotId.value?.let { id ->
                                 scope.launch {
-                                    isBooking = true
+                                    vm.isBookings.value = true
                                     // Pass selectedSlotLabel and selectedDate to repo to calculate startTime
-                                    val bookingId = repo.bookSlot(sportName, id, selectedSlotLabel, selectedDate)
-                                    isBooking = false
+                                    val bookingId = vm.repo.bookSlot(sportName, id, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
+                                    vm.isBookings.value = false
                                     if (bookingId != null) {
                                         Toast.makeText(context, "Booking Successful!", Toast.LENGTH_LONG).show()
                                         // Pass the new bookingId to the pass screen
@@ -109,11 +107,11 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                                 }
                             }
                         },
-                        enabled = selectedSlotId != null && !isBooking,
+                        enabled = vm.selectedSlotId.value != null && !vm.isBookings.value,
                         colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        if (isBooking) {
+                        if (vm.isBookings.value) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
                             Text("CONFIRM BOOKING")
@@ -131,10 +129,10 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                     val isEnabled = index == 0 // Only allow today, disable all following days
                     DateItem(
                         calendar = calendarDays[index],
-                        isSelected = index == selectedDate,
+                        isSelected = index == vm.selectedDate.intValue,
                         isEnabled = isEnabled
                     ) {
-                        if (isEnabled) selectedDate = index
+                        if (isEnabled) vm.selectedDate.intValue = index
                     }
                 }
             }
@@ -149,7 +147,7 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                items(slots) { slot ->
+                items(vm.slots.value) { slot ->
                     Box(
                         Modifier
                             .height(60.dp)
@@ -158,18 +156,18 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                             .background(
                                 when {
                                     slot.isBooked -> Color.LightGray
-                                    slot.id == selectedSlotId -> KhelomoreLightOrange
+                                    slot.id == vm.selectedSlotId.value -> KhelomoreLightOrange
                                     else -> Color.White
                                 }
                             )
                             .border(
                                 1.dp,
-                                if (slot.id == selectedSlotId) KhelomoreOrange else Color.LightGray,
+                                if (slot.id == vm.selectedSlotId.value) KhelomoreOrange else Color.LightGray,
                                 RoundedCornerShape(8.dp)
                             )
                             .clickable(enabled = !slot.isBooked) {
-                                selectedSlotId = slot.id
-                                selectedSlotLabel = slot.label
+                                vm.selectedSlotId.value = slot.id
+                                vm.selectedSlotLabel.value = slot.label
                             },
                         contentAlignment = Alignment.Center
                     ) {
@@ -177,7 +175,7 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                             slot.label + if (slot.isBooked) "\nBooked" else "",
                             textAlign = TextAlign.Center,
                             fontSize = 14.sp,
-                            color = if (slot.id == selectedSlotId) KhelomoreOrange else Color.Black
+                            color = if (slot.id == vm.selectedSlotId.value) KhelomoreOrange else Color.Black
                         )
                     }
                 }

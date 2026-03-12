@@ -9,6 +9,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.myapplication.Model.Booking
+import com.example.myapplication.Model.Slot
 import com.example.myapplication.Model.SlotSortOrder
 import com.example.myapplication.repo.SlotRepository
 import com.google.firebase.Firebase
@@ -67,5 +68,22 @@ class OutScheduleViewModel : ViewModel(){
     var sortOrder = mutableStateOf(SlotSortOrder.MANY_TO_FEW)
 
     val repo =  SlotRepository()
+
+
+    //slot booking
+
+    var selectedSlotId = mutableStateOf<String?>(null)
+    var selectedSlotLabel= mutableStateOf("")
+    var isBookings=mutableStateOf(false)
+    var slots =mutableStateOf(listOf<Slot>())
+
+
+    //booking qr
+    var booking = mutableStateOf<Booking?>(null)
+    var isLoading = mutableStateOf(true)
+
+
+
+
 
 }

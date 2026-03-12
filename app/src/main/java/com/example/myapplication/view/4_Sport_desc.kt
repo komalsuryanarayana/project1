@@ -91,10 +91,10 @@ fun SportDetailScreen(navController: NavHostController, sportName: String) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO */ }) {
+                    IconButton(onClick = { }) {
                         Icon(Icons.Default.FavoriteBorder, contentDescription = "Favorite")
                     }
-                    IconButton(onClick = { /* TODO */ }) {
+                    IconButton(onClick = {}) {
                         Icon(Icons.Default.Share, contentDescription = "Share")
                     }
                 },

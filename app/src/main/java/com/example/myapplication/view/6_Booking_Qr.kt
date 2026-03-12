@@ -38,20 +38,19 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
     val repo = remember { SlotRepository() }
     
     // Use a state to hold the booking details
-    var booking by remember { mutableStateOf<Booking?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
+
 
     LaunchedEffect(bookingId, sportName) {
         if (!bookingId.isNullOrBlank()) {
             repo.streamBookingDetails(bookingId).collect {
-                booking = it
-                isLoading = false
+                vm.booking.value = it
+                vm.isLoading.value = false
             }
         } else {
             // Fallback: get the most recent booking for this sport for the current user
             repo.streamUserBookings(vm.getCurrentUserEmail()).collect { list ->
-                booking = list.lastOrNull { it.sportName == sportName }
-                isLoading = false
+                vm.booking.value = list.lastOrNull { it.sportName == sportName }
+                vm.isLoading.value = false
             }
         }
     }
@@ -68,7 +67,7 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
             )
         }
     ) { innerPadding ->
-        if (isLoading) {
+        if (vm.isLoading.value) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = KhelomoreOrange)
             }
@@ -92,11 +91,11 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column {
                                 Text("Sport", color = Color.Gray, fontSize = 12.sp)
-                                Text(booking?.sportName ?: sportName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                                Text(vm.booking.value?.sportName ?: sportName, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text("Booking ID", color = Color.Gray, fontSize = 12.sp)
-                                Text(booking?.id ?: "N/A", fontWeight = FontWeight.Bold)
+                                Text(vm.booking.value?.id ?: "N/A", fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -105,11 +104,11 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column {
                                 Text("Date", color = Color.Gray, fontSize = 12.sp)
-                                Text(booking?.date ?: "N/A", fontWeight = FontWeight.Medium)
+                                Text(vm.booking.value?.date ?: "N/A", fontWeight = FontWeight.Medium)
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text("Time", color = Color.Gray, fontSize = 12.sp)
-                                Text(booking?.time ?: "N/A", fontWeight = FontWeight.Medium)
+                                Text(vm.booking.value?.time ?: "N/A", fontWeight = FontWeight.Medium)
                             }
                         }
 
