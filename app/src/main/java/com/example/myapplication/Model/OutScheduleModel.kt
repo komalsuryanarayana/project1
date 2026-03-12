@@ -16,3 +16,13 @@ data class Booking(
     val time: String,
     val status: String = "Confirmed"
 )
+
+
+data class Slot(
+    val id: String = "",
+    val label: String = "",
+    val bookedBy: String? = null
+) {
+    val isBooked get() = !bookedBy.isNullOrBlank()
+}
+

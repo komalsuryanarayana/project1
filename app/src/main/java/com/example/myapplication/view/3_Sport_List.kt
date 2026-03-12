@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.myapplication.R
 import com.example.myapplication.Model.SportItem
+import com.example.myapplication.repo.SlotRepository
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
 
@@ -47,18 +48,21 @@ fun SportsListScreen(navController: NavHostController) {
     var sortOrder by rememberSaveable { mutableStateOf(SlotSortOrder.MANY_TO_FEW) }
     val focusManager = LocalFocusManager.current
 
-    val sports = remember {
+    val repo = remember { SlotRepository() }
+    val availableCounts by repo.streamAllAvailableCounts().collectAsState(initial = emptyMap())
+
+    val sports = remember(availableCounts) {
         listOf(
-            SportItem("Foosball", R.drawable.foosball, "A fast-paced tabletop football game where players control rods.", 12),
-            SportItem("Table Tennis", R.drawable.tabletenis, "A quick indoor paddle sport with a lightweight ball.", 8),
-            SportItem("Carrom", R.drawable.carrom, "Precision board game where players flick a striker.", 4),
-            SportItem("8 Ball Pool", R.drawable.pool, "Cue-sport played on a felt table with strategy.", 6),
-            SportItem("Chess", R.drawable.chess, "Strategic board game to checkmate the king.", 10),
+            SportItem("Foosball", R.drawable.foosball, "A fast-paced tabletop football game where players control rods.", availableCounts["foosball"] ?: 9),
+            SportItem("Table Tennis", R.drawable.tabletenis, "A quick indoor paddle sport with a lightweight ball.", availableCounts["table_tennis"] ?: 9),
+            SportItem("Carrom", R.drawable.carrom, "Precision board game where players flick a striker.", availableCounts["carrom"] ?: 9),
+            SportItem("8 Ball Pool", R.drawable.pool, "Cue-sport played on a felt table with strategy.", availableCounts["8_ball_pool"] ?: 9),
+            SportItem("Chess", R.drawable.chess, "Strategic board game to checkmate the king.", availableCounts["chess"] ?: 9),
         )
     }
 
     // ---- Filtering and Sorting Logic ----
-    val displayList = remember(searchQuery, sortOrder) {
+    val displayList = remember(searchQuery, sortOrder, sports) {
         sports
             .filter { it.name.contains(searchQuery, ignoreCase = true) }
             .let { filtered ->
