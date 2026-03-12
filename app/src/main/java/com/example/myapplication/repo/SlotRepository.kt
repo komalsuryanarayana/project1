@@ -21,16 +21,32 @@ class SlotRepository {
     private fun getSlotsRef(sportName: String) = rootRef.child("slots").child(sportName.lowercase().replace(" ", "_"))
     private fun getBookingsRef() = rootRef.child("bookings")
 
+    private fun getTodayStart(): Long {
+        return Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    }
+
     fun streamSlots(sportName: String) = callbackFlow {
         val slotsRef = getSlotsRef(sportName)
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                val todayStart = getTodayStart()
                 val list = snapshot.children.mapNotNull { snap ->
+                    val bookedBy = snap.child("bookedBy").getValue(String::class.java)
+                    val startTime = snap.child("startTime").getValue(Long::class.java) ?: 0L
+                    
+                    // If the booking is from a past day, treat it as available in the UI
+                    val effectiveBookedBy = if (bookedBy != null && startTime < todayStart) null else bookedBy
+
                     Slot(
                         id = snap.key ?: "",
                         label = snap.child("label").getValue(String::class.java)
                             ?: return@mapNotNull null,
-                        bookedBy = snap.child("bookedBy").getValue(String::class.java)
+                        bookedBy = effectiveBookedBy
                     )
                 }
                 trySend(list)
@@ -48,11 +64,16 @@ class SlotRepository {
         val slotsRef = rootRef.child("slots")
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                val todayStart = getTodayStart()
                 val counts = mutableMapOf<String, Int>()
                 snapshot.children.forEach { sportSnap ->
                     val sportKey = sportSnap.key ?: return@forEach
                     val availableCount = sportSnap.children.count {
-                        it.child("bookedBy").getValue(String::class.java).isNullOrBlank()
+                        val bookedBy = it.child("bookedBy").getValue(String::class.java)
+                        val startTime = it.child("startTime").getValue(Long::class.java) ?: 0L
+                        
+                        // Available if no booking OR if booking is expired (from yesterday or earlier)
+                        bookedBy.isNullOrBlank() || startTime < todayStart
                     }
                     counts[sportKey] = availableCount
                 }
@@ -90,13 +111,50 @@ class SlotRepository {
         awaitClose { query.removeEventListener(listener) }
     }
 
+    fun streamBookingDetails(bookingId: String) = callbackFlow<Booking?> {
+        val query = getBookingsRef().orderByChild("id").equalTo(bookingId)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val booking = snapshot.children.firstOrNull()?.let { snap ->
+                    Booking(
+                        id = snap.child("id").getValue(String::class.java) ?: "",
+                        userId = snap.child("userId").getValue(String::class.java) ?: "",
+                        sportName = snap.child("sportName").getValue(String::class.java) ?: "",
+                        date = snap.child("date").getValue(String::class.java) ?: "",
+                        time = snap.child("time").getValue(String::class.java) ?: "",
+                        status = snap.child("status").getValue(String::class.java) ?: "Confirmed"
+                    )
+                }
+                trySend(booking)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        query.addValueEventListener(listener)
+        awaitClose { query.removeEventListener(listener) }
+    }
+
     suspend fun seedSlotsIfEmpty(sportName: String, labels: List<String>) {
         try {
             val slotsRef = getSlotsRef(sportName)
             val snap = slotsRef.get().await()
-            val existingLabels = snap.children.mapNotNull { it.child("label").getValue(String::class.java) }
+            val todayStart = getTodayStart()
 
             val update = mutableMapOf<String, Any?>()
+            
+            // 1. Reset old bookings in DB to free them for the new day
+            snap.children.forEach { child ->
+                val bookedBy = child.child("bookedBy").getValue(String::class.java)
+                val startTime = child.child("startTime").getValue(Long::class.java) ?: 0L
+                if (bookedBy != null && startTime < todayStart) {
+                    update["${child.key}/bookedBy"] = null
+                    update["${child.key}/startTime"] = null
+                }
+            }
+
+            // 2. Add missing slots
+            val existingLabels = snap.children.mapNotNull { it.child("label").getValue(String::class.java) }
             labels.forEach { label ->
                 if (!existingLabels.contains(label)) {
                     val key = slotsRef.push().key!!
@@ -110,10 +168,10 @@ class SlotRepository {
         }
     }
 
-    suspend fun bookSlot(sportName: String, slotId: String, slotLabel: String, dayOffset: Int): Boolean = suspendCancellableCoroutine { continuation ->
+    suspend fun bookSlot(sportName: String, slotId: String, slotLabel: String, dayOffset: Int): String? = suspendCancellableCoroutine { continuation ->
         val user = auth.currentUser
         if (user == null) {
-            continuation.resume(false)
+            continuation.resume(null)
             return@suspendCancellableCoroutine
         }
 
@@ -132,7 +190,14 @@ class SlotRepository {
         ref.runTransaction(object : Transaction.Handler {
             override fun doTransaction(data: MutableData): Transaction.Result {
                 val currentBookedBy = data.child("bookedBy").getValue(String::class.java)
-                if (!currentBookedBy.isNullOrBlank()) return Transaction.abort()
+                val currentStartTime = data.child("startTime").getValue(Long::class.java) ?: 0L
+                val todayStart = getTodayStart()
+                
+                // If it's booked AND the booking is from today, abort. 
+                // If it's booked but from a previous day, we can overwrite it (effectively resetting it).
+                if (!currentBookedBy.isNullOrBlank() && currentStartTime >= todayStart) {
+                    return Transaction.abort()
+                }
 
                 data.child("bookedBy").value = uid
                 data.child("startTime").value = startTime // Store for the backend
@@ -152,9 +217,9 @@ class SlotRepository {
                         "status" to "Confirmed"
                     )
                     getBookingsRef().push().setValue(bookingData)
-                    continuation.resume(true)
+                    continuation.resume(bookingId)
                 } else {
-                    continuation.resume(false)
+                    continuation.resume(null)
                 }
             }
         })

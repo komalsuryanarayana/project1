@@ -31,6 +31,8 @@ import com.example.myapplication.ui.theme.KhelomoreGray
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
 import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Locale
 
 // --- SCREEN 4: SLOT BOOKING ---
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,6 +47,13 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
     var slots by remember { mutableStateOf(listOf<Slot>()) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    // Generate next 7 days starting from today
+    val calendarDays = remember {
+        (0 until 7).map {
+            Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, it) }
+        }
+    }
 
     LaunchedEffect(sportName) {
         repo.seedSlotsIfEmpty(
@@ -88,11 +97,12 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                                 scope.launch {
                                     isBooking = true
                                     // Pass selectedSlotLabel and selectedDate to repo to calculate startTime
-                                    val success = repo.bookSlot(sportName, id, selectedSlotLabel, selectedDate)
+                                    val bookingId = repo.bookSlot(sportName, id, selectedSlotLabel, selectedDate)
                                     isBooking = false
-                                    if (success) {
+                                    if (bookingId != null) {
                                         Toast.makeText(context, "Booking Successful!", Toast.LENGTH_LONG).show()
-                                        navController.navigate("booking_pass/$sportName")
+                                        // Pass the new bookingId to the pass screen
+                                        navController.navigate("booking_pass/$sportName?bookingId=$bookingId")
                                     } else {
                                         Toast.makeText(context, "Booking failed.", Toast.LENGTH_SHORT).show()
                                     }
@@ -118,7 +128,14 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
             Spacer(modifier = Modifier.height(12.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(7) { index ->
-                    DateItem(index, index == selectedDate) { selectedDate = index }
+                    val isEnabled = index == 0 // Only allow today, disable all following days
+                    DateItem(
+                        calendar = calendarDays[index],
+                        isSelected = index == selectedDate,
+                        isEnabled = isEnabled
+                    ) {
+                        if (isEnabled) selectedDate = index
+                    }
                 }
             }
 
@@ -170,19 +187,25 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
 }
 
 @Composable
-fun DateItem(day: Int, isSelected: Boolean, onClick: () -> Unit) {
-    val date = 15 + day
-    val dayName = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[day % 7]
+fun DateItem(calendar: Calendar, isSelected: Boolean, isEnabled: Boolean, onClick: () -> Unit) {
+    val date = calendar.get(Calendar.DAY_OF_MONTH).toString()
+    val dayName = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.getDefault()) ?: ""
     Column(
         modifier = Modifier
             .width(60.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(if (isSelected) KhelomoreOrange else KhelomoreGray)
-            .clickable { onClick() }
+            .background(
+                when {
+                    isSelected -> KhelomoreOrange
+                    !isEnabled -> Color.LightGray.copy(alpha = 0.4f)
+                    else -> KhelomoreGray
+                }
+            )
+            .clickable(enabled = isEnabled) { onClick() }
             .padding(vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(dayName, color = if (isSelected) Color.White else Color.Gray, fontSize = 12.sp)
-        Text(date.toString(), color = if (isSelected) Color.White else Color.Black, fontWeight = FontWeight.Bold)
+        Text(date, color = if (isSelected) Color.White else if (isEnabled) Color.Black else Color.Gray.copy(alpha = 0.6f), fontWeight = FontWeight.Bold)
     }
 }
