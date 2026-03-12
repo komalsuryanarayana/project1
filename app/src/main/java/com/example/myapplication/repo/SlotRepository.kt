@@ -21,6 +21,7 @@ class SlotRepository {
 
     private fun getSlotsRef(sportName: String) = rootRef.child("slots").child(sportName.lowercase().replace(" ", "_"))
     private fun getBookingsRef() = rootRef.child("bookings")
+    private fun getRatingsRef(sportName: String) = rootRef.child("ratings").child(sportName.lowercase().replace(" ", "_"))
 
     private fun getTodayStart(): Long {
         return Calendar.getInstance().apply {
@@ -287,6 +288,34 @@ class SlotRepository {
             Log.e("SlotRepo", "Cancel failed: ${e.message}")
             false
         }
+    }
+
+    suspend fun submitRating(sportName: String, rating: Int): Boolean {
+        return try {
+            val user = auth.currentUser ?: return false
+            val ratingRef = getRatingsRef(sportName).child(user.uid)
+            ratingRef.setValue(rating).await()
+            true
+        } catch (e: Exception) {
+            Log.e("SlotRepo", "Rating failed: ${e.message}")
+            false
+        }
+    }
+
+    fun streamSportRating(sportName: String) = callbackFlow<Pair<Double, Int>> {
+        val ratingRef = getRatingsRef(sportName)
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val ratings = snapshot.children.mapNotNull { it.getValue(Int::class.java) }
+                val average = if (ratings.isNotEmpty()) ratings.average() else 0.0
+                trySend(average to ratings.size)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        ratingRef.addValueEventListener(listener)
+        awaitClose { ratingRef.removeEventListener(listener) }
     }
 }
 

@@ -16,9 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -57,29 +60,37 @@ fun LoginScreen(navController: NavHostController) {
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Modern Title
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(style = SpanStyle(color = Color(0xFF1A1A1A))) {
+                            append("Out")
+                        }
+                        withStyle(style = SpanStyle(color = KhelomoreOrange)) {
+                            append("Schedule")
+                        }
+                    },
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = (-1).sp
+                )
+                
                 Surface(
-                    modifier = Modifier.size(64.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    color = KhelomoreOrange.copy(alpha = 0.1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        tint = KhelomoreOrange,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
+                    modifier = Modifier.padding(vertical = 8.dp).width(40.dp).height(4.dp),
+                    color = KhelomoreOrange,
+                    shape = RoundedCornerShape(2.dp)
+                ) {}
 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Welcome Back",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    text = "Employee Login",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A1A1A)
                 )
                 Text(
-                    text = "Sign in to your employee account",
+                    text = "Sign in to access your dashboard",
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
@@ -138,8 +149,8 @@ fun LoginScreen(navController: NavHostController) {
                             return@Button
                         }
                         
-                        if (!email.endsWith("@ltm.com")) {
-                            Toast.makeText(context, "Use your @ltm.com email", Toast.LENGTH_SHORT).show()
+                        if (!email.endsWith("@ltmemp.com")) {
+                            Toast.makeText(context, "Use your @ltmemp.com email", Toast.LENGTH_SHORT).show()
                             return@Button
                         }
 

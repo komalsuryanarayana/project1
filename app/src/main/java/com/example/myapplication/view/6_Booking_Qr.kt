@@ -146,12 +146,11 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                             var currentuser = vm.getCurrentUserEmail()
                             navController.navigate("category/${currentuser}") { popUpTo("category/${currentuser}") { inclusive = true } }
                         },
-                        modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(35.dp))
-                        Spacer(modifier = Modifier.width(2.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text("Cancel")
                     }
 
