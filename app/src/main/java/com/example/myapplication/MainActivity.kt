@@ -1,9 +1,13 @@
 package com.example.myapplication
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -20,8 +25,29 @@ import com.example.myapplication.ui.theme.KhelomoreOrange
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission granted
+        } else {
+            // Permission denied
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Request notification permission for Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
@@ -103,13 +129,18 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
                 indicatorColor = Color.Transparent
             )
         )
+        // Inside BottomNavigationBar in MainActivity.kt
         NavigationBarItem(
             icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
             label = { Text("Profile") },
-            selected = currentRoute == "profile",
+            // Change currentRoute == "profile" to startsWith
+            selected = currentRoute?.startsWith("profile") == true,
             onClick = {
-                val email1 = auth.currentUser?.email ?: "User"
-                navController.navigate("profile/$email1") {
+                // Get the current user email to pass as the argument
+                val email = auth.currentUser?.email ?: "User"
+
+                // Navigate to the full route with the email parameter
+                navController.navigate("profile/$email") {
                     popUpTo(navController.graph.startDestinationId) {
                         saveState = true
                     }
