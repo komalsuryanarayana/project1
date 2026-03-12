@@ -1,6 +1,6 @@
 package com.example.myapplication
 
-import android.util.Patterns
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -48,7 +48,7 @@ import com.google.firebase.auth.auth
 // --- SCREEN 1: LOGIN ---
 
 @Composable
-fun LoginScreen(navController: NavHostController) {
+fun AdminLoginPage(navController: NavHostController) {
 
     val vm: OutScheduleViewModel = viewModel()
     val auth = Firebase.auth
@@ -56,17 +56,17 @@ fun LoginScreen(navController: NavHostController) {
 
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF8F9FA)), contentAlignment = Alignment.Center){
         Card (
-        modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 40.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Log In",
+                    text = "Log In for Admin",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF333333)
@@ -86,8 +86,8 @@ fun LoginScreen(navController: NavHostController) {
 
 
                 OutlinedTextField(
-                    value = vm.loginusername.value,
-                    onValueChange = { vm.loginusername.value = it },
+                    value = vm.adminloginusername.value,
+                    onValueChange = { vm.adminloginusername.value = it },
                     label = { Text("Email ") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
@@ -102,8 +102,8 @@ fun LoginScreen(navController: NavHostController) {
 
 
                 OutlinedTextField(
-                    value = vm.loginpassword.value,
-                    onValueChange = { vm.loginpassword.value = it },
+                    value = vm.adminloginpassword.value,
+                    onValueChange = { vm.adminloginpassword.value = it },
                     label = { Text("Password") },
                     modifier = Modifier.fillMaxWidth(),
                     visualTransformation = if (vm.passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
@@ -127,27 +127,33 @@ fun LoginScreen(navController: NavHostController) {
 
                 Button(
                     onClick = {
-                    val email = vm.loginusername.value.trim()
-                    val password = vm.loginpassword.value
+                        val email = vm.adminloginusername.value.trim()
+                        val password = vm.adminloginpassword.value
 
-                    if (!email.isNotBlank() || !password.isNotBlank()) {
-                        Toast.makeText(context, "Email and password required", Toast.LENGTH_SHORT).show()
-                    }
+                        if (!email.isNotBlank() || !password.isNotBlank()) {
+                            Toast.makeText(context, "Email and password required", Toast.LENGTH_SHORT).show()
+                        }
 
-                    else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                        Toast.makeText(context, "Invalid email address", Toast.LENGTH_SHORT).show()
-                    } else{
-                        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                        navController.navigate("category/${vm.loginusername.value}")
-                                {
-                                    popUpTo("login") { inclusive = true }
+//                    else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+//                        Toast.makeText(context, "Invalid email address", Toast.LENGTH_SHORT).show()
+//                    }
+
+
+                        else if(!email.endsWith("@ltmadmin.com")){
+                            Toast.makeText(context,"Invalid email address",Toast.LENGTH_SHORT).show()
+                        }
+                        else{
+                            auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    navController.navigate("adminpage")
+                                    {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                } else {
+                                    Toast.makeText(context, "Incorrect Details", Toast.LENGTH_SHORT).show()
                                 }
-                            } else {
-                                Toast.makeText(context, "Incorrect Details", Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }
                     })
                 {
                     Text(
@@ -163,23 +169,23 @@ fun LoginScreen(navController: NavHostController) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Don't have an account? ",
+                        text = "Are you an Employee? ",
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
                     TextButton (
-                        onClick = { navController.navigate("signup") },
+                        onClick = { navController.navigate("login") },
                         contentPadding = PaddingValues(0.dp)
                     ) {
                         Text(
-                            text = "Sign Up",
+                            text = "Login here",
                             color = Color(0xFFFF5722),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+
             }
         }
     }

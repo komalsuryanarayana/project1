@@ -23,6 +23,8 @@ fun AppNavigation(navController: NavHostController) {
 
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") { LoginScreen(navController) }
+        composable ("adminlogin"){AdminLoginPage(navController)  }
+        composable ("adminpage"){adminpage(navController)  }
         composable("signup") { Signuppage(navController) }
         composable("category/{username}") { k->
             val username = k.arguments?.getString("username")?:""

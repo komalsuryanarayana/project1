@@ -20,8 +20,14 @@ class OutScheduleViewModel : ViewModel(){
     //LOGIN PAGE
 
 
-    var loginusername = mutableStateOf("")
-    var loginpassword = mutableStateOf("")
+    var userloginusername = mutableStateOf("")
+    var userloginpassword = mutableStateOf("")
+
+
+    //admin login page
+    var adminloginusername = mutableStateOf("")
+    var adminloginpassword = mutableStateOf("")
+
 
 
 

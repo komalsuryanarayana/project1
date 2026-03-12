@@ -123,7 +123,12 @@ fun Signuppage(navController: NavController) {
                         
                         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                             Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
-                        } else if (password != confirmPassword) {
+                        }
+                        else if(!email.endsWith("@ltm.com")){
+                            Toast.makeText(context,"Invalid email address",Toast.LENGTH_SHORT).show()
+                        }
+
+                        else if (password != confirmPassword) {
                             // Validation check for matching passwords
                             Toast.makeText(context, "Confirm password and password are incorrect", Toast.LENGTH_SHORT).show()
                         } else if (password.length < 6) {
