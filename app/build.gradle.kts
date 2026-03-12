@@ -62,6 +62,9 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation ("com.google.firebase:firebase-database")
 
+    // WorkManager for background notifications (persists app kill)
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

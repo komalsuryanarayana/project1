@@ -1,6 +1,11 @@
 package com.example.myapplication.view
 
 
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,9 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.myapplication.BookingReminderReceiver
 import com.example.myapplication.Model.Slot
 import com.example.myapplication.ViewModel.OutScheduleViewModel
-import com.example.myapplication.repo.SlotRepository
 import com.example.myapplication.ui.theme.KhelomoreGray
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
@@ -56,7 +61,7 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
     LaunchedEffect(sportName) {
         vm.repo.seedSlotsIfEmpty(
             sportName = sportName,
-            labels = listOf("06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "09:40 AM", "10:00 AM", "11:00 AM", "11:30 AM", "12:00 PM")
+            labels = listOf("06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "09:40 AM", "10:00 AM", "11:00 AM", "11:30 AM", "12:00 PM","11:00 PM","11:10 PM","11:15 PM","11:20 PM","11:30 PM")
         )
     }
 
@@ -98,11 +103,14 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                                     val bookingId = vm.repo.bookSlot(sportName, id, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
                                     vm.isBookings.value = false
                                     if (bookingId != null) {
+                                        // Schedule background notification with AlarmManager
+                                        scheduleNotification(context, sportName, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
+
                                         Toast.makeText(context, "Booking Successful!", Toast.LENGTH_LONG).show()
                                         // Pass the new bookingId to the pass screen
                                         navController.navigate("booking_pass/$sportName?bookingId=$bookingId")
                                     } else {
-                                        Toast.makeText(context, "Booking failed.", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Booking failed or already booked today.", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
@@ -182,6 +190,60 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
             }
         }
     }
+}
+
+private fun scheduleNotification(context: android.content.Context, sportName: String, timeLabel: String, dayOffset: Int) {
+    val targetTimeMillis = calculateTimestamp(timeLabel, dayOffset)
+    val triggerAtMillis = targetTimeMillis - (15 * 60 * 1000) // 15 mins before
+
+    if (triggerAtMillis > System.currentTimeMillis()) {
+        val intent = Intent(context, BookingReminderReceiver::class.java).apply {
+            putExtra("sportName", sportName)
+            putExtra("timeLabel", timeLabel)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            sportName.hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pendingIntent
+            )
+        } else {
+            alarmManager.setExact(
+                AlarmManager.RTC_WAKEUP,
+                triggerAtMillis,
+                pendingIntent
+            )
+        }
+    }
+}
+
+private fun calculateTimestamp(label: String, dayOffset: Int): Long {
+    return try {
+        val parts = label.trim().split(" ", ":")
+        var hour = parts[0].toInt()
+        val min = parts[1].toInt()
+        val amPm = parts[2]
+        if (amPm.equals("PM", true) && hour != 12) hour += 12
+        if (amPm.equals("AM", true) && hour == 12) hour = 0
+
+        Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, dayOffset)
+            set(Calendar.HOUR_OF_DAY, hour)
+            set(Calendar.MINUTE, min)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+    } catch (e: Exception) { 0L }
 }
 
 @Composable
