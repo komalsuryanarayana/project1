@@ -1,33 +1,19 @@
-package com.example.myapplication
+package com.example.myapplication.view
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -37,20 +23,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.ui.theme.KhelomoreGray
+import com.example.myapplication.ui.theme.KhelomoreOrange
 
-
-// --- SCREEN 5: BOOKING PASS ---
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingPassScreen(navController: NavHostController, sportName: String) {
+    val vm: OutScheduleViewModel = viewModel()
+    
+    // Get the latest booking for this sport (simulated logic)
+    val booking = vm.bookings.lastOrNull { it.sportName == sportName }
+    
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Booking Confirmation") },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigate("sports_list") { popUpTo("sports_list") { inclusive = true } } }) {
+                    IconButton(onClick = { navController.navigate("category") { popUpTo("category") { inclusive = true } } }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 }
@@ -80,7 +72,7 @@ fun BookingPassScreen(navController: NavHostController, sportName: String) {
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text("Booking ID", color = Color.Gray, fontSize = 12.sp)
-                            Text("#KM-29482", fontWeight = FontWeight.Bold)
+                            Text(booking?.id ?: "#KM-00000", fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -89,17 +81,16 @@ fun BookingPassScreen(navController: NavHostController, sportName: String) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Column {
                             Text("Date", color = Color.Gray, fontSize = 12.sp)
-                            Text("Wed, 15 Oct", fontWeight = FontWeight.Medium)
+                            Text(booking?.date ?: "N/A", fontWeight = FontWeight.Medium)
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             Text("Time", color = Color.Gray, fontSize = 12.sp)
-                            Text("07:00 PM - 08:00 PM", fontWeight = FontWeight.Medium)
+                            Text(booking?.time ?: "N/A", fontWeight = FontWeight.Medium)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Dotted line
                     Canvas(modifier = Modifier.fillMaxWidth().height(1.dp)) {
                         drawLine(
                             color = Color.LightGray,
@@ -111,7 +102,6 @@ fun BookingPassScreen(navController: NavHostController, sportName: String) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // QR Placeholder
                     Box(
                         modifier = Modifier
                             .size(150.dp)
@@ -134,14 +124,50 @@ fun BookingPassScreen(navController: NavHostController, sportName: String) {
                 }
             }
 
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Action Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { 
+                        navController.navigate("slot_booking/$sportName")
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = KhelomoreOrange)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Edit Slot")
+                }
+                
+                Button(
+                    onClick = { 
+                        booking?.let { vm.cancelBooking(it.id) }
+                        navController.navigate("category") { popUpTo("category") { inclusive = true } }
+                    },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cancel")
+                }
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
-            OutlinedButton(
-                onClick = { navController.navigate("sports_list") { popUpTo("sports_list") { inclusive = true } } },
+            Button(
+                onClick = { navController.navigate("category") { popUpTo("category") { inclusive = true } } },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange)
             ) {
-                Text("BACK TO HOME")
+                Text("DONE", fontWeight = FontWeight.Bold)
             }
         }
     }

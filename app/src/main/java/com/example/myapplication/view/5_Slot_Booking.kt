@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,10 +28,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +35,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.ui.theme.KhelomoreGray
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
@@ -49,8 +47,7 @@ import com.example.myapplication.ui.theme.KhelomoreOrange
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SlotBookingScreen(navController: NavHostController, sportName: String) {
-    var selectedDate by remember { mutableIntStateOf(0) }
-    var selectedSlot by remember { mutableIntStateOf(-1) }
+    val vm: OutScheduleViewModel = viewModel()
 
     Scaffold(
         topBar = {
@@ -72,11 +69,18 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                 ) {
                     Column {
                         Text("Selected Slot", fontSize = 12.sp, color = Color.Gray)
-                        Text(if (selectedSlot != -1) "${6+selectedSlot}:00 PM" else "None", fontWeight = FontWeight.Bold)
+                        Text(if (vm.selectedSlot.intValue != -1) "${6+vm.selectedSlot.intValue}:00 PM" else "None", fontWeight = FontWeight.Bold)
                     }
                     Button(
-                        onClick = { if(selectedSlot != -1) navController.navigate("booking_pass/$sportName") },
-                        enabled = selectedSlot != -1,
+                        onClick = { 
+                            if(vm.selectedSlot.intValue != -1) {
+                                val slots = listOf("06:00 PM", "07:00 PM", "08:00 PM", "09:00 PM", "10:00 PM", "11:00 PM")
+                                val date = (15 + vm.selectedDate.intValue).toString() + " Oct"
+                                vm.addBooking(sportName, date, slots[vm.selectedSlot.intValue])
+                                navController.navigate("booking_pass/$sportName")
+                            }
+                        },
+                        enabled = vm.selectedSlot.intValue != -1,
                         colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange),
                         shape = RoundedCornerShape(8.dp)
                     ) {
@@ -91,7 +95,7 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
             Spacer(modifier = Modifier.height(12.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(7) { index ->
-                    DateItem(index, index == selectedDate) { selectedDate = index }
+                    DateItem(index, index == vm.selectedDate.intValue) { vm.selectedDate.intValue = index }
                 }
             }
 
@@ -107,7 +111,7 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                 modifier = Modifier.weight(1f)
             ) {
                 items(slots.size) { index ->
-                    SlotItem(slots[index], index == selectedSlot) { selectedSlot = index }
+                    SlotItem(slots[index], index == vm.selectedSlot.intValue) { vm.selectedSlot.intValue = index }
                 }
             }
         }
