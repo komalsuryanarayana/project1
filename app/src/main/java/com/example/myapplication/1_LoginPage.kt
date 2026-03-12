@@ -142,28 +142,28 @@ fun LoginScreen(navController: NavHostController) {
 
                 Button(
                     onClick = {
-//                    val email = vm.loginusername.value.trim()
-//                    val password = vm.loginpassword.value
-//
-//                    if (!email.isNotBlank() || !password.isNotBlank()) {
-//                        Toast.makeText(context, "Email and password required", Toast.LENGTH_SHORT).show()
-//                    }
-//
-//                    else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-//                        Toast.makeText(context, "Invalid email address", Toast.LENGTH_SHORT).show()
-//                    } else{
-//                        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-//                            if (task.isSuccessful) {
+                    val email = vm.loginusername.value.trim()
+                    val password = vm.loginpassword.value
+
+                    if (!email.isNotBlank() || !password.isNotBlank()) {
+                        Toast.makeText(context, "Email and password required", Toast.LENGTH_SHORT).show()
+                    }
+
+                    else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        Toast.makeText(context, "Invalid email address", Toast.LENGTH_SHORT).show()
+                    } else{
+                        auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
                         navController.navigate("category")
-//                                {
-//                                    popUpTo("login") { inclusive = true }
-//                                }
-//                            } else {
-//                                Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
-//                            }
-//                        }
-////
-//                    }
+                                {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            } else {
+                                Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+//
+                    }
                     })
                 {
                     Text(

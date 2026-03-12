@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "703290563598",
-    "project_id": "outschedule-a516e",
-    "storage_bucket": "outschedule-a516e.firebasestorage.app"
+    "project_number": "848520269738",
+    "project_id": "test1-e0b4a",
+    "storage_bucket": "test1-e0b4a.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:703290563598:android:9b74b6aec89ad55a18305f",
+        "mobilesdk_app_id": "1:848520269738:android:0961b76743a81380ee25d3",
         "android_client_info": {
           "package_name": "com.example.myapplication"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAYHz9JCpKCVZZINIkIWrxqismusX8BkeE"
+          "current_key": "AIzaSyBJWfF5BxJCMUxtyIvlGVY_kVlqDR0MHN0"
         }
       ],
       "services": {
