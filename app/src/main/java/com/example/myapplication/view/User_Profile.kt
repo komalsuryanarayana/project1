@@ -22,7 +22,13 @@ import com.example.myapplication.ui.theme.KhelomoreOrange
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserProfileScreen(navController: NavHostController) {
+fun UserProfileScreen(navController: NavHostController, currentuser: String) {
+
+    val displayName = if (currentuser.isNotBlank()) {
+        currentuser.substringBefore("@").replaceFirstChar { it.uppercase() }
+    } else {
+        "User"
+    }
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -47,8 +53,8 @@ fun UserProfileScreen(navController: NavHostController) {
                 Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(64.dp), tint = KhelomoreOrange)
             }
             Spacer(modifier = Modifier.height(24.dp))
-            Text("John Doe", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text("Employee ID: L&T12345", color = Color.Gray)
+            Text(displayName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+
             
             Spacer(modifier = Modifier.height(48.dp))
             
@@ -57,9 +63,7 @@ fun UserProfileScreen(navController: NavHostController) {
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    ProfileItem("Email", "john.doe@larsentoubro.com")
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileItem("Department", "Digital Transformation")
+                    ProfileItem("Email", currentuser)
                 }
             }
             

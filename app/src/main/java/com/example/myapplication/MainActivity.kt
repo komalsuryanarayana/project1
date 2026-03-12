@@ -91,6 +91,7 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
             label = { Text("History") },
             selected = currentRoute == "booking_history",
             onClick = {
+
                 navController.navigate("booking_history") {
                     popUpTo(navController.graph.startDestinationId) {
                         saveState = true
@@ -112,7 +113,8 @@ fun BottomNavigationBar(navController: NavHostController, currentRoute: String?)
             label = { Text("Profile") },
             selected = currentRoute == "profile",
             onClick = {
-                navController.navigate("profile") {
+                val email1 = auth.currentUser?.email ?: "User"
+                navController.navigate("profile/$email1") {
                     popUpTo(navController.graph.startDestinationId) {
                         saveState = true
                     }
