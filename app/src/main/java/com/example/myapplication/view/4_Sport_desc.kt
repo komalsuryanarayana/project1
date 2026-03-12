@@ -22,22 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.myapplication.Model.SportDescription
 import com.example.myapplication.R
 import com.example.myapplication.ui.theme.KhelomoreGray
 import com.example.myapplication.ui.theme.KhelomoreOrange
 
 
 // --- SCREEN 3: SPORT DESCRIPTION ---
-
-data class SportDescription(
-    val name: String,
-    val imageRes: Int,
-    val squadSize: String,
-    val description: String,
-    val facilities: List<String>,
-    val rules: List<String>
-)
-
 val sportDetailsMap = mapOf(
     "Foosball" to SportDescription(
         name = "Foosball",

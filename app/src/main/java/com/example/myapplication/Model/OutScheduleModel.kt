@@ -32,3 +32,12 @@ enum class SlotSortOrder {
     MANY_TO_FEW,
     FEW_TO_MANY
 }
+
+data class SportDescription(
+    val name: String,
+    val imageRes: Int,
+    val squadSize: String,
+    val description: String,
+    val facilities: List<String>,
+    val rules: List<String>
+)
