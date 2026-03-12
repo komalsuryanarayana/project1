@@ -1,10 +1,8 @@
-package com.example.myapplication.view
+package com.example.myapplication
 
 import android.util.Patterns
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,29 +16,26 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SportsScore
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -58,7 +53,6 @@ fun LoginScreen(navController: NavHostController) {
     val vm: OutScheduleViewModel = viewModel()
     val auth = Firebase.auth
     val context = LocalContext.current
-
 
     Box(
         modifier = Modifier
@@ -95,9 +89,6 @@ fun LoginScreen(navController: NavHostController) {
                     fontWeight = FontWeight.Bold,
                     color = KhelomoreOrange
                 )
-                //Text("@LTM(Group of L&T)", modifier = Modifier.padding(top = 2.dp))
-                //Spacer(modifier = Modifier.height(8.dp))
-                //Text("Corporate Recreation Booking", color = Color.Gray)
 
                 Spacer(modifier = Modifier.height(48.dp))
 
@@ -105,12 +96,12 @@ fun LoginScreen(navController: NavHostController) {
                 OutlinedTextField(
                     value = vm.loginusername.value,
                     onValueChange = { vm.loginusername.value = it },
-                    label = { Text("Employee ID") },
+                    label = { Text("Email ") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF0D99FF),
-                        focusedLabelColor = Color(0xFF0D99FF),
+                        focusedBorderColor = Color(0xFFFF5722),
+                        focusedLabelColor = Color(0xFFFF5722),
                         unfocusedBorderColor = Color.LightGray,
                         unfocusedLabelColor = Color.Gray
                     )
@@ -123,14 +114,16 @@ fun LoginScreen(navController: NavHostController) {
                     onValueChange = { vm.loginpassword.value = it },
                     label = { Text("Password") },
                     modifier = Modifier.fillMaxWidth(),
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (vm.passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.VisibilityOff,
-                            contentDescription = null,
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        IconButton(onClick = { vm.passwordVisible.value = !vm.passwordVisible.value }) {
+                            Icon(
+                                imageVector = if (vm.passwordVisible.value) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color.LightGray,
@@ -154,15 +147,14 @@ fun LoginScreen(navController: NavHostController) {
                     } else{
                         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
                             if (task.isSuccessful) {
-                        navController.navigate("category")
+                        navController.navigate("category/${vm.loginusername.value}")
                                 {
                                     popUpTo("login") { inclusive = true }
                                 }
                             } else {
-                                Toast.makeText(context, "Login failed", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Incorrect Details", Toast.LENGTH_SHORT).show()
                             }
                         }
-//
                     }
                     })
                 {
@@ -189,7 +181,7 @@ fun LoginScreen(navController: NavHostController) {
                     ) {
                         Text(
                             text = "Sign Up",
-                            color = Color(0xFF0D99FF),
+                            color = Color(0xFFFF5722),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -198,8 +190,5 @@ fun LoginScreen(navController: NavHostController) {
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
-
     }
-
-
 }

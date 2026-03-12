@@ -7,8 +7,6 @@ import androidx.navigation.compose.composable
 import com.example.myapplication.view.BookingHistoryScreen
 import com.example.myapplication.view.BookingPassScreen
 import com.example.myapplication.view.Categorypage
-import com.example.myapplication.view.LoginScreen
-import com.example.myapplication.view.Signuppage
 import com.example.myapplication.view.SlotBookingScreen
 import com.example.myapplication.view.SplashScreen
 import com.example.myapplication.view.SportDetailScreen
@@ -21,7 +19,9 @@ fun AppNavigation(navController: NavHostController) {
         composable ("splash"){ SplashScreen(navController) }
         composable("login") { LoginScreen(navController) }
         composable("signup") { Signuppage(navController) }
-        composable("category") { Categorypage(navController) }
+        composable("category/{username}") { k->
+            val username = k.arguments?.getString("username")?:""
+            Categorypage(navController, username) }
         composable("sports_list") { SportsListScreen(navController) }
         composable("booking_history") { BookingHistoryScreen(navController) }
         composable("profile") { UserProfileScreen(navController) }

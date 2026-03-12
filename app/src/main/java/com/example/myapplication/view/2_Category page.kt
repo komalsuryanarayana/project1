@@ -20,20 +20,28 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Categorypage(navController: NavController) {
+fun Categorypage(navController: NavController, username: String) {
+    val displayName = if (username.isNotBlank()) {
+        username.substringBefore("@").replaceFirstChar { it.uppercase() }
+    } else {
+        "User"
+    }
+
     Scaffold(
         topBar = {
             LargeTopAppBar(
                 title = {
                     Column {
                         Text("Welcome Back,", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
-                        Text("John Doe", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
+                        Text(displayName, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.ExtraBold)
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(containerColor = Color.Transparent)
