@@ -113,6 +113,9 @@ class OutScheduleViewModel : ViewModel(){
     var showDialog = mutableStateOf(false)
 
 
+    var showRatingDialog = mutableStateOf(false)
+
+
 
 
 }

@@ -83,24 +83,26 @@ val sportDetailsMap = mapOf(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SportDetailScreen(navController: NavHostController, sportName: String) {
+
+    var vm : OutScheduleViewModel = viewModel()
     val sport = sportDetailsMap[sportName] ?: sportDetailsMap["8 Ball Pool"]!!
     val repo = remember { SlotRepository() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     
     val ratingInfo by repo.streamSportRating(sportName).collectAsState(initial = 0.0 to 0)
-    var showRatingDialog by remember { mutableStateOf(false) }
 
-    if (showRatingDialog) {
+
+    if (vm.showRatingDialog.value) {
         RatingDialog(
-            onDismiss = { showRatingDialog = false },
+            onDismiss = { vm.showRatingDialog.value = false },
             onSubmit = { rating ->
                 scope.launch {
                     val success = repo.submitRating(sportName, rating)
                     if (success) {
                         Toast.makeText(context, "Thank you for rating!", Toast.LENGTH_SHORT).show()
                     }
-                    showRatingDialog = false
+                    vm.showRatingDialog.value = false
                 }
             }
         )
@@ -116,7 +118,7 @@ fun SportDetailScreen(navController: NavHostController, sportName: String) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showRatingDialog = true }) {
+                    IconButton(onClick = { vm.showRatingDialog.value = true }) {
                         Icon(Icons.Default.StarBorder, contentDescription = "Rate", tint = KhelomoreOrange)
                     }
                 },
