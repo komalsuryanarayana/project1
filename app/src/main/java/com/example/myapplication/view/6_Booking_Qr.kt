@@ -133,26 +133,13 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                                 .border(1.dp, Color.LightGray, RoundedCornerShape(8.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.QrCode, contentDescription = "QR Code", modifier = Modifier.size(100.dp), tint = Color.DarkGray)
+                            Icon(Icons.Default.QrCode, contentDescription = "QR Code", modifier = Modifier.size(150.dp), tint = Color.DarkGray)
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(32.dp))
 
 
-                    Button(
-                        onClick = {
-                            var currentuser = vm.getCurrentUserEmail()
-                            navController.navigate("category/${currentuser}") { popUpTo("category/${currentuser}") { inclusive = true } }
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-                    ) {
-                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(35.dp))
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("Cancel")
-                    }
 
             }
         }

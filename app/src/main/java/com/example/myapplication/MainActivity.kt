@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,14 +32,16 @@ class MainActivity : ComponentActivity() {
     ) { isGranted: Boolean ->
         if (isGranted) {
             // Permission granted
+            Log.d("Permission Status: ","Granted")
         } else {
             // Permission denied
+            Log.d("Permission Status: ","Denied")
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Request notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
@@ -56,9 +59,9 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = navBackStackEntry?.destination?.route
 
                 // Disable bottom bar for login, signup, splash and ALL admin screens
-                val showBottomBar = currentRoute != null && 
-                                   !currentRoute.lowercase().contains("login") && 
-                                   !currentRoute.lowercase().contains("signup") && 
+                val showBottomBar = currentRoute != null &&
+                                   !currentRoute.lowercase().contains("login") &&
+                                   !currentRoute.lowercase().contains("signup") &&
                                    !currentRoute.lowercase().contains("splash") &&
                                    !currentRoute.lowercase().contains("admin")
 
@@ -81,7 +84,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun BottomNavigationBar(navController: NavHostController, currentRoute: String?) {
     val auth = FirebaseAuth.getInstance()
-    
+
     NavigationBar(
         containerColor = Color.White,
         tonalElevation = 8.dp

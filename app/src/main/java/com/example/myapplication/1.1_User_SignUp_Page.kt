@@ -37,7 +37,6 @@ fun Signuppage(navController: NavController) {
     val vm: OutScheduleViewModel = viewModel()
     val auth = Firebase.auth
     val context = LocalContext.current
-    var isAdminSignup by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
     Box(
@@ -86,13 +85,13 @@ fun Signuppage(navController: NavController) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = if (isAdminSignup) "Admin Registration" else "Create Account",
+                    text = "Create Account",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1A1A1A)
                 )
                 Text(
-                    text = if (isAdminSignup) "Register as a system administrator" else "Join as an employee",
+                    text = "Join as an employee",
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
@@ -107,7 +106,7 @@ fun Signuppage(navController: NavController) {
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
-                    placeholder = { Text(if (isAdminSignup) "name@Ltmadmin.com" else "name@LtmEmp.com") },
+                    placeholder = { Text("name@LtmEmp.com") },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = KhelomoreOrange,
                         focusedLabelColor = KhelomoreOrange
@@ -179,7 +178,7 @@ fun Signuppage(navController: NavController) {
                             return@Button
                         }
 
-                        val requiredDomain = if (isAdminSignup) "@Ltmadmin.com" else "@LtmEmp.com"
+                        val requiredDomain = "@LtmEmp.com"
                         if (!email.endsWith(requiredDomain, ignoreCase = true)) {
                             Toast.makeText(context, "Email must end with $requiredDomain", Toast.LENGTH_SHORT).show()
                             return@Button
@@ -200,8 +199,7 @@ fun Signuppage(navController: NavController) {
                             isLoading = false
                             if (task.isSuccessful) {
                                 Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
-                                val targetRoute = if (isAdminSignup) "adminlogin" else "login"
-                                navController.navigate(targetRoute) {
+                                navController.navigate("login") {
                                     popUpTo("signup") { inclusive = true }
                                 }
                             } else {
@@ -218,22 +216,14 @@ fun Signuppage(navController: NavController) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text(
-                            text = if (isAdminSignup) "Register as Admin" else "Sign Up",
+                            text = "Sign Up",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
                 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                TextButton(onClick = { isAdminSignup = !isAdminSignup }) {
-                    Text(
-                        text = if (isAdminSignup) "Register as Employee instead" else "Are you an Admin? Signup here",
-                        color = KhelomoreOrange,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color.LightGray.copy(alpha = 0.5f))
 
@@ -241,8 +231,7 @@ fun Signuppage(navController: NavController) {
                     Text("Already have an account? ", color = Color.Gray, fontSize = 14.sp)
                     TextButton(
                         onClick = { 
-                            if (isAdminSignup) navController.navigate("adminlogin") 
-                            else navController.navigate("login") 
+                            navController.navigate("login") 
                         },
                         contentPadding = PaddingValues(0.dp)
                     ) {
