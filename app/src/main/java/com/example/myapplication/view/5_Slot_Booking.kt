@@ -11,7 +11,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -31,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.myapplication.BookingReminderReceiver
+import com.example.myapplication.notification.BookingReminderReceiver
 import com.example.myapplication.Model.Slot
 import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.ui.theme.KhelomoreGray
@@ -40,7 +39,8 @@ import com.example.myapplication.ui.theme.KhelomoreOrange
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
-import com.example.myapplication.NotificationWorker
+import com.example.myapplication.notification.NotificationWorker
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
@@ -50,23 +50,32 @@ import java.util.concurrent.TimeUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SlotBookingScreen(navController: NavHostController, sportName: String) {
-    var vm: OutScheduleViewModel = viewModel()
-
-
+    val vm: OutScheduleViewModel = viewModel()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Generate next 7 days starting from today
-    val calendarDays = remember {
-        (0 until 7).map {
-            Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, it) }
+    // Today's date info
+    val today = remember { Calendar.getInstance() }
+    
+    // State to keep track of current time to refresh "Passed" slots live
+
+
+    // Update current time every minute
+    LaunchedEffect(Unit) {
+        while (true) {
+            vm.currentTimeMillis.value = System.currentTimeMillis()
+            delay(60000) // 1 minute
         }
     }
 
     LaunchedEffect(sportName) {
         vm.repo.seedSlotsIfEmpty(
             sportName = sportName,
-            labels = listOf("06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "09:40 AM", "10:00 AM", "11:00 AM", "11:30 AM", "12:00 PM","11:00 PM","11:10 PM","11:15 PM","11:20 PM","11:30 PM")
+            labels = listOf(
+                "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", 
+                "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", 
+                "06:00 PM"
+            )
         )
     }
 
@@ -77,18 +86,19 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Select Slots - $sportName") },
+                title = { Text("Select Slots - $sportName", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
         bottomBar = {
-            Surface(shadowElevation = 8.dp) {
+            Surface(shadowElevation = 16.dp, color = Color.White) {
                 Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    modifier = Modifier.padding(20.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -96,7 +106,9 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                         Text("Selected Slot", fontSize = 12.sp, color = Color.Gray)
                         Text(
                             if (vm.selectedSlotId.value != null) vm.selectedSlotLabel.value else "None",
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 18.sp,
+                            color = KhelomoreOrange
                         )
                     }
                     Button(
@@ -104,16 +116,12 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                             vm.selectedSlotId.value?.let { id ->
                                 scope.launch {
                                     vm.isBookings.value = true
-                                    // Pass selectedSlotLabel and selectedDate to repo to calculate startTime
-                                    val bookingId = vm.repo.bookSlot(sportName, id, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
+                                    val bookingId = vm.repo.bookSlot(sportName, id, vm.selectedSlotLabel.value, 0)
                                     vm.isBookings.value = false
                                     if (bookingId != null) {
-                                        // Schedule background notification with BOTH AlarmManager and WorkManager
-                                        scheduleNotification(context, sportName, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
-                                        scheduleWorkNotification(context, sportName, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
-
+                                        scheduleNotification(context, sportName, vm.selectedSlotLabel.value, 0)
+                                        scheduleWorkNotification(context, sportName, vm.selectedSlotLabel.value, 0)
                                         Toast.makeText(context, "Booking Successful!", Toast.LENGTH_LONG).show()
-                                        // Pass the new bookingId to the pass screen
                                         navController.navigate("booking_pass/$sportName?bookingId=$bookingId")
                                     } else {
                                         Toast.makeText(context, "Booking failed or already booked today.", Toast.LENGTH_SHORT).show()
@@ -123,77 +131,118 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                         },
                         enabled = vm.selectedSlotId.value != null && !vm.isBookings.value,
                         colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.height(50.dp)
                     ) {
                         if (vm.isBookings.value) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
-                            Text("CONFIRM BOOKING")
+                            Text("CONFIRM", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).padding(16.dp)) {
-            Text("Select Date", fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(7) { index ->
-                    val isEnabled = index == 0 // Only allow today, disable all following days
-                    DateItem(
-                        calendar = calendarDays[index],
-                        isSelected = index == vm.selectedDate.intValue,
-                        isEnabled = isEnabled
-                    ) {
-                        if (isEnabled) vm.selectedDate.intValue = index
-                    }
+        Column(modifier = Modifier.padding(innerPadding).padding(horizontal = 20.dp)) {
+            Spacer(modifier = Modifier.height(20.dp))
+            Text("Booking For Today", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Single Today Date Card
+            Surface(
+                modifier = Modifier
+                    .width(100.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(KhelomoreOrange),
+                color = Color.Transparent
+            ) {
+                Column(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        today.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault()) ?: "", 
+                        color = Color.White.copy(alpha = 0.8f), 
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        today.get(Calendar.DAY_OF_MONTH).toString(), 
+                        color = Color.White, 
+                        fontWeight = FontWeight.ExtraBold, 
+                        fontSize = 24.sp
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-            Text("Available Slots", fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(12.dp))
+            Text("Available Time Slots", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(16.dp))
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 items(vm.slots.value) { slot ->
+                    val slotTimeMillis = calculateTimestamp(slot.label, 0)
+                    val isPast = slotTimeMillis < vm.currentTimeMillis.value
+                    val isUnavailable = slot.isBooked || isPast
+
                     Box(
                         Modifier
-                            .height(60.dp)
+                            .height(65.dp)
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(RoundedCornerShape(12.dp))
                             .background(
                                 when {
-                                    slot.isBooked -> Color.LightGray
+                                    isUnavailable -> Color(0xFFF0F0F0)
                                     slot.id == vm.selectedSlotId.value -> KhelomoreLightOrange
                                     else -> Color.White
                                 }
                             )
                             .border(
-                                1.dp,
-                                if (slot.id == vm.selectedSlotId.value) KhelomoreOrange else Color.LightGray,
-                                RoundedCornerShape(8.dp)
+                                1.5.dp,
+                                when {
+                                    slot.id == vm.selectedSlotId.value -> KhelomoreOrange
+                                    isUnavailable -> Color.Transparent
+                                    else -> Color(0xFFE0E0E0)
+                                },
+                                RoundedCornerShape(12.dp)
                             )
-                            .clickable(enabled = !slot.isBooked) {
+                            .clickable(enabled = !isUnavailable) {
                                 vm.selectedSlotId.value = slot.id
                                 vm.selectedSlotLabel.value = slot.label
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            slot.label + if (slot.isBooked) "\nBooked" else "",
-                            textAlign = TextAlign.Center,
-                            fontSize = 14.sp,
-                            color = if (slot.id == vm.selectedSlotId.value) KhelomoreOrange else Color.Black
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = slot.label,
+                                textAlign = TextAlign.Center,
+                                fontSize = 14.sp,
+                                fontWeight = if (slot.id == vm.selectedSlotId.value) FontWeight.Bold else FontWeight.Medium,
+                                color = when {
+                                    isUnavailable -> Color.LightGray
+                                    slot.id == vm.selectedSlotId.value -> KhelomoreOrange
+                                    else -> Color.Black
+                                }
+                            )
+                            if (isUnavailable) {
+                                Text(
+                                    text = if (slot.isBooked) "Booked" else "Passed",
+                                    fontSize = 10.sp,
+                                    color = Color.LightGray,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
@@ -219,7 +268,7 @@ private fun scheduleWorkNotification(context: Context, sportName: String, timeLa
 
 private fun scheduleNotification(context: android.content.Context, sportName: String, timeLabel: String, dayOffset: Int) {
     val targetTimeMillis = calculateTimestamp(timeLabel, dayOffset)
-    val triggerAtMillis = targetTimeMillis - (15 * 60 * 1000) // 15 mins before
+    val triggerAtMillis = targetTimeMillis - (15 * 60 * 1000)
 
     if (triggerAtMillis > System.currentTimeMillis()) {
         val intent = Intent(context, BookingReminderReceiver::class.java).apply {
@@ -269,28 +318,4 @@ private fun calculateTimestamp(label: String, dayOffset: Int): Long {
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
     } catch (e: Exception) { 0L }
-}
-
-@Composable
-fun DateItem(calendar: Calendar, isSelected: Boolean, isEnabled: Boolean, onClick: () -> Unit) {
-    val date = calendar.get(Calendar.DAY_OF_MONTH).toString()
-    val dayName = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.getDefault()) ?: ""
-    Column(
-        modifier = Modifier
-            .width(60.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(
-                when {
-                    isSelected -> KhelomoreOrange
-                    !isEnabled -> Color.LightGray.copy(alpha = 0.4f)
-                    else -> KhelomoreGray
-                }
-            )
-            .clickable(enabled = isEnabled) { onClick() }
-            .padding(vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(dayName, color = if (isSelected) Color.White else Color.Gray, fontSize = 12.sp)
-        Text(date, color = if (isSelected) Color.White else if (isEnabled) Color.Black else Color.Gray.copy(alpha = 0.6f), fontWeight = FontWeight.Bold)
-    }
 }

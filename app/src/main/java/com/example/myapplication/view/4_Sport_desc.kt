@@ -25,9 +25,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.myapplication.Model.SportDescription
 import com.example.myapplication.R
+import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.repo.SlotRepository
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
@@ -133,7 +135,7 @@ fun SportDetailScreen(navController: NavHostController, sportName: String) {
                         .fillMaxWidth()
                         .padding(20.dp)
                         .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF008542)),
+                    colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -282,7 +284,9 @@ fun SportDetailScreen(navController: NavHostController, sportName: String) {
 
 @Composable
 fun RatingDialog(onDismiss: () -> Unit, onSubmit: (Int) -> Unit) {
-    var selectedRating by remember { mutableStateOf(0) }
+
+    var vm : OutScheduleViewModel = viewModel()
+
     
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -293,11 +297,11 @@ fun RatingDialog(onDismiss: () -> Unit, onSubmit: (Int) -> Unit) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Row(horizontalArrangement = Arrangement.Center) {
                     (1..5).forEach { index ->
-                        IconButton(onClick = { selectedRating = index }) {
+                        IconButton(onClick = { vm.selectedRating.value = index }) {
                             Icon(
-                                imageVector = if (index <= selectedRating) Icons.Default.Star else Icons.Default.StarBorder,
+                                imageVector = if (index <= vm.selectedRating.value) Icons.Default.Star else Icons.Default.StarBorder,
                                 contentDescription = null,
-                                tint = if (index <= selectedRating) KhelomoreOrange else Color.LightGray,
+                                tint = if (index <= vm.selectedRating.value) KhelomoreOrange else Color.LightGray,
                                 modifier = Modifier.size(36.dp)
                             )
                         }
@@ -307,8 +311,8 @@ fun RatingDialog(onDismiss: () -> Unit, onSubmit: (Int) -> Unit) {
         },
         confirmButton = {
             Button(
-                onClick = { if (selectedRating > 0) onSubmit(selectedRating) },
-                enabled = selectedRating > 0,
+                onClick = { if (vm.selectedRating.value > 0) onSubmit(vm.selectedRating.value) },
+                enabled = vm.selectedRating.value > 0,
                 colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange)
             ) {
                 Text("Submit")

@@ -30,23 +30,8 @@ fun Categorypage(navController: NavController, username: String) {
     } else {
         "User"
     }
+    
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Hello,", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
-                        Text(displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Notifications */ }) {
-                        Icon(Icons.Default.NotificationsNone, contentDescription = null)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
-        },
         containerColor = Color(0xFFFDFDFD)
     ) { innerPadding ->
         Column(
@@ -55,7 +40,22 @@ fun Categorypage(navController: NavController, username: String) {
                 .fillMaxSize()
                 .padding(horizontal = 20.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Welcome Header (Replaces TopAppBar)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text("Hello,", style = MaterialTheme.typography.labelLarge, color = Color.Gray)
+                    Text(displayName, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                }
+
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
             
             // Modern Banner
             Card(
@@ -76,7 +76,6 @@ fun Categorypage(navController: NavController, username: String) {
                 ) {
                     // Decorative circles
                     Box(modifier = Modifier.size(150.dp).offset(x = 220.dp, y = (-50).dp).clip(CircleShape).background(Color.White.copy(alpha = 0.1f)))
-                    Box(modifier = Modifier.size(100.dp).offset(x = (-30).dp, y = 100.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.05f)))
                     
                     Column(
                         modifier = Modifier
@@ -139,36 +138,6 @@ fun Categorypage(navController: NavController, username: String) {
                     color = Color(0xFFFF6584),
                     onClick = { navController.navigate("slot_booking/Massage Chair") }
                 )
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            // Dynamic Status Card
-            Text("Booking Status", fontWeight = FontWeight.ExtraBold, fontSize = 18.sp, color = Color(0xFF1A1A1A))
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color.White,
-                shape = RoundedCornerShape(20.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEEEEE))
-            ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier.size(48.dp).clip(CircleShape).background(KhelomoreLightOrange),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = null, tint = KhelomoreOrange, modifier = Modifier.size(20.dp))
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text("Weekly Allowance", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Text("3 slots available this week", color = Color.Gray, fontSize = 13.sp)
-                    }
-                }
             }
         }
     }

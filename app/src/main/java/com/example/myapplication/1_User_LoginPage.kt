@@ -36,7 +36,7 @@ fun LoginScreen(navController: NavHostController) {
     val vm: OutScheduleViewModel = viewModel()
     val auth = Firebase.auth
     val context = LocalContext.current
-    var isLoading by remember { mutableStateOf(false) }
+
 
     Box(
         modifier = Modifier
@@ -154,9 +154,9 @@ fun LoginScreen(navController: NavHostController) {
                             return@Button
                         }
 
-                        isLoading = true
+                        vm.isLoadinglogin.value = true
                         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-                            isLoading = false
+                            vm.isLoadinglogin.value = false
                             if (task.isSuccessful) {
                                 navController.navigate("category/$email") {
                                     popUpTo("login") { inclusive = true }
@@ -169,9 +169,9 @@ fun LoginScreen(navController: NavHostController) {
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange),
-                    enabled = !isLoading
+                    enabled = !vm.isLoadinglogin.value
                 ) {
-                    if (isLoading) {
+                    if (vm.isLoadinglogin.value) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.Bold)

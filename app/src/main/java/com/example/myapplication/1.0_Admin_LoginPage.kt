@@ -37,7 +37,7 @@ fun AdminLoginPage(navController: NavHostController) {
     val vm: OutScheduleViewModel = viewModel()
     val auth = Firebase.auth
     val context = LocalContext.current
-    var isLoading by remember { mutableStateOf(false) }
+
 
     Box(
         modifier = Modifier
@@ -155,9 +155,9 @@ fun AdminLoginPage(navController: NavHostController) {
                             return@Button
                         }
 
-                        isLoading = true
+                        vm.isLoadingadmin.value = true
                         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-                            isLoading = false
+                            vm.isLoadingadmin.value = false
                             if (task.isSuccessful) {
                                 navController.navigate("adminpage") {
                                     popUpTo("login") { inclusive = true }
@@ -170,9 +170,9 @@ fun AdminLoginPage(navController: NavHostController) {
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange),
-                    enabled = !isLoading
+                    enabled = !vm.isLoadingadmin.value
                 ) {
-                    if (isLoading) {
+                    if (vm.isLoadingadmin.value) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text("Login as Admin", fontSize = 16.sp, fontWeight = FontWeight.Bold)

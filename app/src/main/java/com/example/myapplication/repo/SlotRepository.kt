@@ -37,17 +37,25 @@ class SlotRepository {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val todayStart = getTodayStart()
+                val now = System.currentTimeMillis()
                 val list = snapshot.children.mapNotNull { snap ->
                     val bookedBy = snap.child("bookedBy").getValue(String::class.java)
                     val startTime = snap.child("startTime").getValue(Long::class.java) ?: 0L
+                    val label = snap.child("label").getValue(String::class.java) ?: ""
                     
-                    // If the booking is from a past day, treat it as available in the UI
-                    val effectiveBookedBy = if (bookedBy != null && startTime < todayStart) null else bookedBy
+                    val slotTimestamp = calculateTimestamp(label, 0)
+                    val isPast = slotTimestamp < now
+                    
+                    // Effective status for UI
+                    val effectiveBookedBy = when {
+                        isPast -> "system_passed"
+                        bookedBy != null && startTime >= todayStart -> bookedBy
+                        else -> null
+                    }
 
                     Slot(
                         id = snap.key ?: "",
-                        label = snap.child("label").getValue(String::class.java)
-                            ?: return@mapNotNull null,
+                        label = label,
                         bookedBy = effectiveBookedBy
                     )
                 }
@@ -67,15 +75,25 @@ class SlotRepository {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val todayStart = getTodayStart()
+                val now = System.currentTimeMillis()
                 val counts = mutableMapOf<String, Int>()
+                
                 snapshot.children.forEach { sportSnap ->
                     val sportKey = sportSnap.key ?: return@forEach
-                    val availableCount = sportSnap.children.count {
-                        val bookedBy = it.child("bookedBy").getValue(String::class.java)
-                        val startTime = it.child("startTime").getValue(Long::class.java) ?: 0L
+                    val availableCount = sportSnap.children.count { slotSnap ->
+                        val label = slotSnap.child("label").getValue(String::class.java) ?: ""
+                        val bookedBy = slotSnap.child("bookedBy").getValue(String::class.java)
+                        val startTimeInDb = slotSnap.child("startTime").getValue(Long::class.java) ?: 0L
                         
-                        // Available if no booking OR if booking is expired (from yesterday or earlier)
-                        bookedBy.isNullOrBlank() || startTime < todayStart
+                        val slotTimeForToday = calculateTimestamp(label, 0)
+                        
+                        // A slot is available ONLY if:
+                        // 1. Its time hasn't passed yet for today
+                        // 2. AND it's not currently booked for today
+                        val isPast = slotTimeForToday < now
+                        val isBookedForToday = !bookedBy.isNullOrBlank() && startTimeInDb >= todayStart
+                        
+                        !isPast && !isBookedForToday
                     }
                     counts[sportKey] = availableCount
                 }
@@ -95,12 +113,14 @@ class SlotRepository {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val list = snapshot.children.mapNotNull { snap ->
                     Booking(
+                        firebaseKey = snap.key ?: "",
                         id = snap.child("id").getValue(String::class.java) ?: "",
                         userId = snap.child("userId").getValue(String::class.java) ?: "",
                         sportName = snap.child("sportName").getValue(String::class.java) ?: "",
                         date = snap.child("date").getValue(String::class.java) ?: "",
                         time = snap.child("time").getValue(String::class.java) ?: "",
-                        status = snap.child("status").getValue(String::class.java) ?: "Confirmed"
+                        status = snap.child("status").getValue(String::class.java) ?: "Confirmed",
+                        slotId = snap.child("slotId").getValue(String::class.java) ?: ""
                     )
                 }
                 trySend(list)
@@ -119,12 +139,14 @@ class SlotRepository {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val booking = snapshot.children.firstOrNull()?.let { snap ->
                     Booking(
+                        firebaseKey = snap.key ?: "",
                         id = snap.child("id").getValue(String::class.java) ?: "",
                         userId = snap.child("userId").getValue(String::class.java) ?: "",
                         sportName = snap.child("sportName").getValue(String::class.java) ?: "",
                         date = snap.child("date").getValue(String::class.java) ?: "",
                         time = snap.child("time").getValue(String::class.java) ?: "",
-                        status = snap.child("status").getValue(String::class.java) ?: "Confirmed"
+                        status = snap.child("status").getValue(String::class.java) ?: "Confirmed",
+                        slotId = snap.child("slotId").getValue(String::class.java) ?: ""
                     )
                 }
                 trySend(booking)
@@ -195,28 +217,26 @@ class SlotRepository {
                 val currentStartTime = data.child("startTime").getValue(Long::class.java) ?: 0L
                 val todayStart = getTodayStart()
                 
-                // If it's booked AND the booking is from today, abort. 
-                // If it's booked but from a previous day, we can overwrite it (effectively resetting it).
                 if (!currentBookedBy.isNullOrBlank() && currentStartTime >= todayStart) {
                     return Transaction.abort()
                 }
 
                 data.child("bookedBy").value = uid
-                data.child("startTime").value = startTime // Store for the backend
+                data.child("startTime").value = startTime 
                 return Transaction.success(data)
             }
 
             override fun onComplete(e: DatabaseError?, committed: Boolean, snap: DataSnapshot?) {
                 if (e == null && committed) {
-                    // Record the booking in "bookings" node
-                    val bookingId = "KM-" + (10000..99999).random().toString()
+                    val bookingId = "LTM-" + (10000..99999).random().toString()
                     val bookingData = mapOf(
                         "id" to bookingId,
                         "userId" to email,
                         "sportName" to sportName,
                         "date" to dateStr,
                         "time" to timeStr,
-                        "status" to "Confirmed"
+                        "status" to "Confirmed",
+                        "slotId" to slotId // Store slotId to free precisely on cancel
                     )
                     getBookingsRef().push().setValue(bookingData)
                     continuation.resume(bookingId)
@@ -231,7 +251,7 @@ class SlotRepository {
         return listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[month]
     }
 
-    private fun calculateTimestamp(label: String, dayOffset: Int): Long {
+    fun calculateTimestamp(label: String, dayOffset: Int): Long {
         return try {
             val parts = label.trim().split(" ", ":")
             var hour = parts[0].toInt()
@@ -250,44 +270,54 @@ class SlotRepository {
         } catch (e: Exception) { 0L }
     }
 
-
-
-    fun streamAllBookings(): Flow<List<Booking>> = callbackFlow {
-        val db = FirebaseDatabase.getInstance().getReference("bookings")
-        val listener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val bookings = snapshot.children.mapNotNull { it.getValue(Booking::class.java) }
-                trySend(bookings)
-            }
-            override fun onCancelled(error: DatabaseError) {
-                close(error.toException())
-            }
-        }
-        db.addValueEventListener(listener)
-        awaitClose { db.removeEventListener(listener) }
-    }
-
-    suspend fun cancelBooking(bookingId: String, sportName: String, timeLabel: String): Boolean {
+    suspend fun cancelBooking(firebaseKey: String, sportName: String, slotId: String): Boolean {
         return try {
-            // 1. Remove from bookings node
-            val bookingsQuery = getBookingsRef().orderByChild("id").equalTo(bookingId)
-            val bookingsSnap = bookingsQuery.get().await()
-            bookingsSnap.children.forEach { it.ref.removeValue().await() }
+            if (firebaseKey.isEmpty()) {
+                Log.e("SlotRepo", "Cannot cancel: firebaseKey is empty")
+                return false
+            }
+            
+            // 1. Remove from bookings node using the unique Firebase Key
+            getBookingsRef().child(firebaseKey).removeValue().await()
 
-            // 2. Free up the slot
-            val slotsRef = getSlotsRef(sportName)
-            val slotsSnap = slotsRef.get().await()
-            slotsSnap.children.forEach { slot ->
-                if (slot.child("label").value == timeLabel) {
-                    slot.ref.child("bookedBy").removeValue().await()
-                    slot.ref.child("startTime").removeValue().await()
-                }
+            // 2. Free up the specific slot
+            if (sportName.isNotEmpty() && slotId.isNotEmpty()) {
+                val slotRef = getSlotsRef(sportName).child(slotId)
+                slotRef.child("bookedBy").removeValue().await()
+                slotRef.child("startTime").removeValue().await()
+            } else {
+                Log.w("SlotRepo", "Warning: Sport name or slotId missing, slot not freed in DB")
             }
             true
         } catch (e: Exception) {
             Log.e("SlotRepo", "Cancel failed: ${e.message}")
             false
         }
+    }
+
+    fun streamAllBookings(): Flow<List<Booking>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val bookings = snapshot.children.mapNotNull { snap ->
+                    Booking(
+                        firebaseKey = snap.key ?: "",
+                        id = snap.child("id").getValue(String::class.java) ?: "",
+                        userId = snap.child("userId").getValue(String::class.java) ?: "",
+                        sportName = snap.child("sportName").getValue(String::class.java) ?: "",
+                        date = snap.child("date").getValue(String::class.java) ?: "",
+                        time = snap.child("time").getValue(String::class.java) ?: "",
+                        status = snap.child("status").getValue(String::class.java) ?: "Confirmed",
+                        slotId = snap.child("slotId").getValue(String::class.java) ?: ""
+                    )
+                }
+                trySend(bookings)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        getBookingsRef().addValueEventListener(listener)
+        awaitClose { getBookingsRef().removeEventListener(listener) }
     }
 
     suspend fun submitRating(sportName: String, rating: Int): Boolean {
@@ -306,7 +336,7 @@ class SlotRepository {
         val ratingRef = getRatingsRef(sportName)
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val ratings = snapshot.children.mapNotNull { it.getValue(Int::class.java) }
+                val ratings = snapshot.children.mapNotNull { (it.value as? Number)?.toDouble() }
                 val average = if (ratings.isNotEmpty()) ratings.average() else 0.0
                 trySend(average to ratings.size)
             }
@@ -317,8 +347,26 @@ class SlotRepository {
         ratingRef.addValueEventListener(listener)
         awaitClose { ratingRef.removeEventListener(listener) }
     }
+
+    fun streamAllRatings() = callbackFlow<Map<String, Double>> {
+        val ratingsRef = rootRef.child("ratings")
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val result = mutableMapOf<String, Double>()
+                snapshot.children.forEach { sportSnap ->
+                    val sportKey = sportSnap.key ?: return@forEach
+                    val ratings = sportSnap.children.mapNotNull { (it.value as? Number)?.toDouble() }
+                    if (ratings.isNotEmpty()) {
+                        result[sportKey] = ratings.average()
+                    }
+                }
+                trySend(result)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        ratingsRef.addValueEventListener(listener)
+        awaitClose { ratingsRef.removeEventListener(listener) }
+    }
 }
-
-
-// Add this to your SlotRepository class
-

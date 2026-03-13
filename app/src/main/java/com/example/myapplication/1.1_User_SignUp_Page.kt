@@ -37,7 +37,7 @@ fun Signuppage(navController: NavController) {
     val vm: OutScheduleViewModel = viewModel()
     val auth = Firebase.auth
     val context = LocalContext.current
-    var isLoading by remember { mutableStateOf(false) }
+
 
     Box(
         modifier = Modifier
@@ -194,9 +194,9 @@ fun Signuppage(navController: NavController) {
                             return@Button
                         }
 
-                        isLoading = true
+                        vm.isLoadingsignup.value = true
                         auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-                            isLoading = false
+                            vm.isLoadingsignup.value = false
                             if (task.isSuccessful) {
                                 Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
                                 navController.navigate("login") {
@@ -210,9 +210,9 @@ fun Signuppage(navController: NavController) {
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = KhelomoreOrange),
-                    enabled = !isLoading
+                    enabled = !vm.isLoadingsignup.value
                 ) {
-                    if (isLoading) {
+                    if (vm.isLoadingsignup.value) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                     } else {
                         Text(

@@ -12,7 +12,6 @@ object FirebaseProvider {
         try {
             instance.setPersistenceEnabled(true)
         } catch (e: Exception) {
-            // Already initialized or failed to set persistence
         }
         instance
     }

@@ -49,17 +49,15 @@ fun SportsListScreen(navController: NavHostController) {
 
     val focusManager = LocalFocusManager.current
 
-
-
     val availableCounts by vm.repo.streamAllAvailableCounts().collectAsState(initial = emptyMap())
 
     val sports = remember(availableCounts) {
         listOf(
-            SportItem("Foosball", R.drawable.foosball, "A fast-paced tabletop football game where players control rods.", availableCounts["foosball"] ?: 9),
-            SportItem("Table Tennis", R.drawable.tabletenis, "A quick indoor paddle sport with a lightweight ball.", availableCounts["table_tennis"] ?: 9),
-            SportItem("Carrom", R.drawable.carrom, "Precision board game where players flick a striker.", availableCounts["carrom"] ?: 9),
-            SportItem("8 Ball Pool", R.drawable.pool, "Cue-sport played on a felt table with strategy.", availableCounts["8_ball_pool"] ?: 9),
-            SportItem("Chess", R.drawable.chess, "Strategic board game to checkmate the king.", availableCounts["chess"] ?: 9),
+            SportItem("Foosball", R.drawable.foosball, "A fast-paced tabletop football game where players control rods.", availableCounts["foosball"] ?: 13),
+            SportItem("Table Tennis", R.drawable.tabletenis, "A quick indoor paddle sport with a lightweight ball.", availableCounts["table_tennis"] ?: 13),
+            SportItem("Carrom", R.drawable.carrom, "Precision board game where players flick a striker.", availableCounts["carrom"] ?: 13),
+            SportItem("8 Ball Pool", R.drawable.pool, "Cue-sport played on a felt table with strategy.", availableCounts["8_ball_pool"] ?: 13),
+            SportItem("Chess", R.drawable.chess, "Strategic board game to checkmate the king.", availableCounts["chess"] ?: 13),
         )
     }
 

@@ -2,6 +2,7 @@ package com.example.myapplication.ViewModel
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,8 +41,8 @@ class OutScheduleViewModel : ViewModel(){
     var confirmPasswordVisible =  mutableStateOf(false)
 
     //SLOT BOOKING
-    var selectedDate = mutableIntStateOf(0)
-    var selectedSlot  = mutableIntStateOf(-1)
+//    var selectedDate = mutableIntStateOf(0)
+//    var selectedSlot  = mutableIntStateOf(-1)
 
     //BOOKINGS DATA
     var bookings = mutableStateListOf<Booking>()
@@ -88,6 +89,28 @@ class OutScheduleViewModel : ViewModel(){
     var booking = mutableStateOf<Booking?>(null)
     var isLoading = mutableStateOf(true)
 
+
+    var isLoadingadmin = mutableStateOf(false)
+
+    var isLoadingsignup = mutableStateOf(false)
+
+
+    var isLoadinglogin = mutableStateOf(false)
+
+
+
+    var searchQuerys = mutableStateOf("")
+
+    val allBookings = mutableStateOf<List<Booking>>(emptyList())
+
+
+    var selectedRating =mutableStateOf(0)
+
+
+    var currentTimeMillis = mutableLongStateOf(System.currentTimeMillis())
+
+
+    var showDialog = mutableStateOf(false)
 
 
 

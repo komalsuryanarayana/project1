@@ -137,10 +137,6 @@ fun BookingPassScreen(navController: NavHostController, sportName: String, booki
                         }
                     }
                 }
-
-
-
-
             }
         }
     }

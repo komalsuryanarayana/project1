@@ -80,13 +80,20 @@ fun BookingHistoryScreen(navController: NavHostController) {
                     ModernHistoryCard(
                         booking = booking,
                         onCardClick = {
-                            navController.navigate("booking_pass/${booking.sportName}")
+                            navController.navigate("booking_pass/${booking.sportName}?bookingId=${booking.id}")
                         },
                         onCancelClick = {
                             scope.launch {
-                                val success = repo.cancelBooking(booking.id, booking.sportName, booking.time)
+                                // Use the unique firebaseKey and slotId for precise deletion
+                                val success = repo.cancelBooking(
+                                    firebaseKey = booking.firebaseKey,
+                                    sportName = booking.sportName,
+                                    slotId = booking.slotId
+                                )
                                 if (success) {
-                                    Toast.makeText(context, "Booking removed", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Booking cancelled successfully", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to cancel booking", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         }
@@ -99,23 +106,23 @@ fun BookingHistoryScreen(navController: NavHostController) {
 
 @Composable
 fun ModernHistoryCard(booking: Booking, onCardClick: () -> Unit, onCancelClick: () -> Unit) {
-    var showDialog by remember { mutableStateOf(false) }
+    var vm : OutScheduleViewModel = viewModel()
 
-    if (showDialog) {
+    if (vm.showDialog.value) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { vm.showDialog.value = false },
             title = { Text("Cancel Booking") },
             text = { Text("Are you sure you want to cancel your ${booking.sportName} slot?") },
             confirmButton = {
                 TextButton(onClick = {
                     onCancelClick()
-                    showDialog = false
+                    vm.showDialog.value = false
                 }) {
                     Text("Yes, Cancel", color = Color.Red, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
+                TextButton(onClick = { vm.showDialog.value = false }) {
                     Text("No")
                 }
             }
@@ -167,7 +174,7 @@ fun ModernHistoryCard(booking: Booking, onCardClick: () -> Unit, onCancelClick: 
             }
 
             IconButton(
-                onClick = { showDialog = true },
+                onClick = { vm.showDialog.value = true },
                 modifier = Modifier.clip(CircleShape).background(Color(0xFFFFEBEE))
             ) {
                 Icon(Icons.Default.Cancel, contentDescription = "Cancel", tint = Color.Red, modifier = Modifier.size(20.dp))

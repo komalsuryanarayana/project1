@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.admin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,8 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,19 +25,18 @@ import com.example.myapplication.ui.theme.KhelomoreOrange
 @Composable
 fun AdminDashboardScreen(navController: NavHostController) {
     val vm: OutScheduleViewModel = viewModel()
-    var searchQuery by remember { mutableStateOf("") }
-    val allBookings = remember { mutableStateOf<List<Booking>>(emptyList()) }
+
 
     // Fetch all bookings from Firebase
     LaunchedEffect(Unit) {
         vm.repo.streamAllBookings().collect {
-            allBookings.value = it
+            vm.allBookings.value = it
         }
     }
 
     // Filtering Logic
-    val filteredBookings = allBookings.value.filter {
-        it.userId.contains(searchQuery, ignoreCase = true)
+    val filteredBookings = vm.allBookings.value.filter {
+        it.userId.contains(vm.searchQuerys.value, ignoreCase = true)
     }
 
     Scaffold(
@@ -62,8 +59,8 @@ fun AdminDashboardScreen(navController: NavHostController) {
 
             // Search Bar
             OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
+                value = vm.searchQuerys.value,
+                onValueChange = { vm.searchQuerys.value = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
