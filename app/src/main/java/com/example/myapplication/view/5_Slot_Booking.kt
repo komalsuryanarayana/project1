@@ -37,9 +37,14 @@ import com.example.myapplication.ViewModel.OutScheduleViewModel
 import com.example.myapplication.ui.theme.KhelomoreGray
 import com.example.myapplication.ui.theme.KhelomoreLightOrange
 import com.example.myapplication.ui.theme.KhelomoreOrange
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
+import com.example.myapplication.NotificationWorker
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 // --- SCREEN 4: SLOT BOOKING ---
 @OptIn(ExperimentalMaterial3Api::class)
@@ -103,8 +108,9 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                                     val bookingId = vm.repo.bookSlot(sportName, id, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
                                     vm.isBookings.value = false
                                     if (bookingId != null) {
-                                        // Schedule background notification with AlarmManager
+                                        // Schedule background notification with BOTH AlarmManager and WorkManager
                                         scheduleNotification(context, sportName, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
+                                        scheduleWorkNotification(context, sportName, vm.selectedSlotLabel.value, vm.selectedDate.intValue)
 
                                         Toast.makeText(context, "Booking Successful!", Toast.LENGTH_LONG).show()
                                         // Pass the new bookingId to the pass screen
@@ -189,6 +195,25 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
                 }
             }
         }
+    }
+}
+
+private fun scheduleWorkNotification(context: Context, sportName: String, timeLabel: String, dayOffset: Int) {
+    val targetTimeMillis = calculateTimestamp(timeLabel, dayOffset)
+    val delay = targetTimeMillis - (15 * 60 * 1000) - System.currentTimeMillis()
+
+    if (delay > 0) {
+        val inputData = Data.Builder()
+            .putString("sportName", sportName)
+            .putString("time", timeLabel)
+            .build()
+
+        val workRequest = OneTimeWorkRequest.Builder(NotificationWorker::class.java)
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInputData(inputData)
+            .build()
+
+        WorkManager.getInstance(context).enqueue(workRequest)
     }
 }
 
