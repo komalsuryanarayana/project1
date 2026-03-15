@@ -17,10 +17,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication">
 
+<!--        tells android where reminder code is located-->
         <receiver
             android:name=".notification.BookingReminderReceiver"
             android:enabled="true"
             android:exported="false" />
+<!--        exported = false tells android only this app can is allowed to send signals to receiver-->
 
         <activity
             android:name=".MainActivity"

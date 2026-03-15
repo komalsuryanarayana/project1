@@ -267,25 +267,33 @@ private fun scheduleWorkNotification(context: Context, sportName: String, timeLa
 }
 
 private fun scheduleNotification(context: android.content.Context, sportName: String, timeLabel: String, dayOffset: Int) {
-    val targetTimeMillis = calculateTimestamp(timeLabel, dayOffset)
-    val triggerAtMillis = targetTimeMillis - (15 * 60 * 1000)
+    val targetTimeMillis = calculateTimestamp(timeLabel, dayOffset)//calculates the timeslot's time from sling to milliseconds
+    val triggerAtMillis = targetTimeMillis - (15 * 60 * 1000)//calculates 15 mins before time of timeslot
 
+    // If that 15 mins before time is greater than current time(If user books after 15 mins before the slot time he will remember his slot time hopefully :))
     if (triggerAtMillis > System.currentTimeMillis()) {
+        //sends an Intent to BookingReminderReceiver class
         val intent = Intent(context, BookingReminderReceiver::class.java).apply {
             putExtra("sportName", sportName)
             putExtra("timeLabel", timeLabel)
         }
-
+        //Pending Intent is like a Permission Slip
+        //You are giving Android System Permission to wake the app even if it's not running
+        //and run the code inside BookingReminderReceiver
         val pendingIntent = PendingIntent.getBroadcast(
             context,
-            sportName.hashCode(),
+            sportName.hashCode(),// Using hashcode of sport name ensures system sees different sports alarms as unique
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        //This accesses phone's alarm system(The same one the Clock app uses)
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        
+
+        // This Conditional statement tells tells the phone Even if the screen is off/ CPU is asleep
+        //Wake Up and Fire the Alarm
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            //setExactAndAllowWhileIdle - This is a powerful command which tells even if phone uses doze mode(modern phones use this feature to save battery) you must wake up and fire the alarm
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,
                 triggerAtMillis,
@@ -301,6 +309,7 @@ private fun scheduleNotification(context: android.content.Context, sportName: St
     }
 }
 
+//Converts timeSlot's String type time to milliseconds time
 private fun calculateTimestamp(label: String, dayOffset: Int): Long {
     return try {
         val parts = label.trim().split(" ", ":")

@@ -109,7 +109,7 @@ fun AdminBookingCard(booking: Booking) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(text = booking.userId, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text(text = "ID: ${booking.id.takeLast(8)}", fontSize = 12.sp, color = Color.Gray)
+                    Text(text = "ID: ${booking.id.takeLast(9)}", fontSize = 12.sp, color = Color.Gray)
                 }
             }
 
