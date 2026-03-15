@@ -64,7 +64,7 @@ fun SlotBookingScreen(navController: NavHostController, sportName: String) {
     LaunchedEffect(Unit) {
         while (true) {
             vm.currentTimeMillis.value = System.currentTimeMillis()
-            delay(60000) // 1 minute
+            delay(60000)
         }
     }
 

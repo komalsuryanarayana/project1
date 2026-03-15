@@ -15,7 +15,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 import kotlin.coroutines.resume
 
-class SlotRepository {
+class   SlotRepository {
     private val auth = FirebaseProvider.auth
     private val rootRef = FirebaseProvider.db.reference
 
@@ -171,6 +171,7 @@ class SlotRepository {
             snap.children.forEach { child ->
                 val bookedBy = child.child("bookedBy").getValue(String::class.java)
                 val startTime = child.child("startTime").getValue(Long::class.java) ?: 0L
+                //checks if the booked by any user and startime is yesterday. If satisfied frees up the slots for today
                 if (bookedBy != null && startTime < todayStart) {
                     update["${child.key}/bookedBy"] = null
                     update["${child.key}/startTime"] = null
@@ -180,8 +181,12 @@ class SlotRepository {
             // 2. Add missing slots
             val existingLabels = snap.children.mapNotNull { it.child("label").getValue(String::class.java) }
             labels.forEach { label ->
+                // Checks if something in the labels list is missing in the firebasedatabase
+                //if it is missing it adds it to firebase database
                 if (!existingLabels.contains(label)) {
-                    val key = slotsRef.push().key!!
+                    //Used for Creating different unique ids for different users when they try to initialize at the same time
+                    val key = slotsRef.push().key!!//creates a new unique location in database(".key!!" extracts unique id).This is a firebase command
+
                     update["$key/label"] = label
                     update["$key/bookedBy"] = null
                 }
